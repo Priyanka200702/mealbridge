@@ -542,7 +542,10 @@ class _DashboardState extends State<Dashboard> {
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('foods')
-                .orderBy('timestamp', descending: true)
+                .where(
+                  'orgId',
+                  isEqualTo: FirebaseAuth.instance.currentUser?.uid,
+                )
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -551,7 +554,20 @@ class _DashboardState extends State<Dashboard> {
                 );
               }
 
-              var docs = snapshot.data?.docs ?? [];
+              var docs = snapshot.data?.docs.toList() ?? [];
+
+              // Local sort by timestamp to avoid composite index requirement
+              docs.sort((a, b) {
+                var dataA = a.data() as Map<String, dynamic>;
+                var dataB = b.data() as Map<String, dynamic>;
+                var t1 = dataA['timestamp'] as Timestamp?;
+                var t2 = dataB['timestamp'] as Timestamp?;
+                if (t1 == null && t2 == null) return 0;
+                if (t1 == null) return 1;
+                if (t2 == null) return -1;
+                return t2.compareTo(t1);
+              });
+
               var availableDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 return data['status'] == 'available';
@@ -650,11 +666,14 @@ class _DashboardState extends State<Dashboard> {
                                             color: Colors.grey.shade600,
                                           ),
                                           const SizedBox(width: 4),
-                                          Text(
-                                            data['quantity'] ?? 'N/A',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 13,
+                                          Flexible(
+                                            child: Text(
+                                              data['quantity'] ?? 'N/A',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 13,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                           const SizedBox(width: 12),
@@ -697,20 +716,70 @@ class _DashboardState extends State<Dashboard> {
                                 ),
                                 const SizedBox(width: 8),
                                 TextButton(
-                                  onPressed: () => _showClaimDialog(
-                                    context,
-                                    doc.id,
-                                    data['food'] ?? 'Food',
-                                    data['orgName'] ??
-                                        data['name'] ??
-                                        'this organisation',
-                                  ),
+                                  onPressed: () async {
+                                    bool? confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text("Delete Food"),
+                                        content: const Text(
+                                          "Are you sure you want to delete this food item?",
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: const Text("Delete"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true && context.mounted) {
+                                      try {
+                                        await FirebaseFirestore.instance
+                                            .collection('foods')
+                                            .doc(doc.id)
+                                            .delete();
+
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Food deleted successfully 🗑️",
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                "Error deleting food: $e",
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
                                   style: TextButton.styleFrom(
-                                    backgroundColor: Colors.green.shade600,
+                                    backgroundColor: Colors.red.shade600,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
+                                      horizontal: 12,
+                                      vertical: 10,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
