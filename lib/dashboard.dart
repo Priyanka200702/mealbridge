@@ -5,7 +5,7 @@ import 'package:ngofood/add_food.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:ngofood/profile.dart';
 import 'package:ngofood/widgets/notification_dialog.dart';
-
+import 'package:ngofood/leaderboard.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'dart:async';
@@ -118,6 +118,78 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF8),
+      drawer: Drawer(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F2027), Color(0xFF2C5364)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // 🔰 Stylish Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.business, color: Colors.green.shade700),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          "Organisation Panel",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "Manage your impact",
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 🌟 Menu Items
+              _buildDrawerItem(Icons.call, "Contact Us", () {
+                Navigator.pop(context);
+              }),
+
+              _buildDrawerItem(Icons.emoji_events, "Leaderboard", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LeaderboardPage()),
+                );
+              }),
+
+              _buildDrawerItem(Icons.help_outline, "FAQ", () {
+                Navigator.pop(context);
+              }),
+
+              const Divider(color: Colors.white30, indent: 20, endIndent: 20),
+
+              // _buildDrawerItem(Icons.logout, "Logout", () async {
+              //   await FirebaseAuth.instance.signOut();
+              // }, isDanger: true),
+            ],
+          ),
+        ),
+      ),
       extendBodyBehindAppBar: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
@@ -144,6 +216,8 @@ class _DashboardState extends State<Dashboard> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: false,
+
+            //automaticallyImplyLeading: false,
             title: Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Column(
@@ -809,4 +883,40 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
+}
+
+Widget _buildDrawerItem(
+  IconData icon,
+  String title,
+  VoidCallback onTap, {
+  bool isDanger = false,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    child: Material(
+      color: Colors.white.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: isDanger ? Colors.redAccent : Colors.white),
+              const SizedBox(width: 16),
+              Text(
+                title,
+                style: TextStyle(
+                  color: isDanger ? Colors.redAccent : Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
