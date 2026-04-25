@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "927525905040",
+    "project_id": "extrafood-f6deb",
+    "storage_bucket": "extrafood-f6deb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:927525905040:android:30fe22be391d382970ee15",
+        "android_client_info": {
+          "package_name": "com.example.ngofood"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDvtTCJP-EhTEGYR86CFlDF_2_J8dW4yo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
