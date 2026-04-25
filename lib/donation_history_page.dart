@@ -11,97 +11,103 @@ class DonationHistoryPage extends StatefulWidget {
 }
 
 class _DonationHistoryPageState extends State<DonationHistoryPage> {
-  final User? user = FirebaseAuth.instance.currentUser;
-  String _filter = "All Time";
+  String _filter = 'All Time'; // 'This Week' or 'All Time'
+  final String? _uid = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAF8),
       appBar: AppBar(
-        title: const Text("Donation History"),
+        title: const Text(
+          "Donation History",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
         centerTitle: true,
-        elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black87,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           PopupMenuButton<String>(
+            icon: const Icon(Icons.filter_list, color: Colors.black87),
             onSelected: (value) {
               setState(() {
                 _filter = value;
               });
             },
-            icon: const Icon(Icons.filter_list),
             itemBuilder: (context) => [
-              const PopupMenuItem(value: "All Time", child: Text("All Time")),
-              const PopupMenuItem(value: "This Week", child: Text("This Week")),
+              const PopupMenuItem(value: 'All Time', child: Text('All Time')),
+              const PopupMenuItem(value: 'This Week', child: Text('This Week')),
             ],
           ),
         ],
       ),
       body: Column(
         children: [
-          if (_filter != "All Time")
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
-              child: Row(
-                children: [
-                  Chip(
-                    label: Text(_filter, style: const TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.green.shade700,
-                    onDeleted: () {
-                      setState(() {
-                        _filter = "All Time";
-                      });
-                    },
-                    deleteIconColor: Colors.white,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              children: [
+                Text(
+                  "Showing: ",
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                Text(
+                  _filter,
+                  style: TextStyle(
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _getFilteredStream(),
+              stream: _getStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.history_outlined, size: 80, color: Colors.grey.shade300),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "No donations yet",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Your contributions will appear here.",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  );
+                  return _buildEmptyState();
+                }
+
+                var docs = snapshot.data!.docs.toList();
+                
+                // Sort locally by timestamp descending
+                docs.sort((a, b) {
+                  var t1 = (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                  var t2 = (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                  if (t1 == null && t2 == null) return 0;
+                  if (t1 == null) return 1;
+                  if (t2 == null) return -1;
+                  return t2.compareTo(t1);
+                });
+
+                // Client-side filtering for "This Week" if needed
+                if (_filter == 'This Week') {
+                  final now = DateTime.now();
+                  final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+                  docs = docs.where((doc) {
+                    final timestamp = (doc['timestamp'] as Timestamp?)?.toDate();
+                    return timestamp != null && timestamp.isAfter(startOfWeek);
+                  }).toList();
+                }
+
+                if (docs.isEmpty) {
+                  return _buildEmptyState();
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: snapshot.data!.docs.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    var donation = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                    return _buildDonationCard(donation, index);
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    return _buildHistoryCard(data, index);
                   },
                 );
               },
@@ -112,32 +118,52 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
     );
   }
 
-  Stream<QuerySnapshot> _getFilteredStream() {
-    var query = FirebaseFirestore.instance
+  Stream<QuerySnapshot> _getStream() {
+    return FirebaseFirestore.instance
         .collection('donations_history')
-        .where('orgId', isEqualTo: user?.uid)
-        .orderBy('timestamp', descending: true);
-
-    if (_filter == "This Week") {
-      DateTime lastWeek = DateTime.now().subtract(const Duration(days: 7));
-      query = query.where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(lastWeek));
-    }
-
-    return query.snapshots();
+        .where('orgId', isEqualTo: _uid)
+        .snapshots();
   }
 
-  Widget _buildDonationCard(Map<String, dynamic> donation, int index) {
-    DateTime? timestamp = (donation['timestamp'] as Timestamp?)?.toDate();
-    String formattedDate = timestamp != null ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp) : 'Unknown';
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history_rounded, size: 80, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          const Text(
+            "No donations yet",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Your donation history will appear here.",
+            style: TextStyle(color: Colors.grey.shade400),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(Map<String, dynamic> data, int index) {
+    final timestamp = data['timestamp'] as Timestamp?;
+    final dateStr = timestamp != null
+        ? DateFormat('MMM dd, yyyy • hh:mm a').format(timestamp.toDate())
+        : 'Unknown Date';
     
-    return TweenAnimationBuilder(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 400 + (index * 100)),
-      tween: Tween<double>(begin: 0, end: 1),
-      builder: (context, double value, child) {
+      builder: (context, value, child) {
         return Opacity(
           opacity: value,
           child: Transform.translate(
-            offset: Offset(0, 30 * (1 - value)),
+            offset: Offset(0, 20 * (1 - value)),
             child: child,
           ),
         );
@@ -158,19 +184,15 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           leading: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.green.shade50,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              _getFoodIcon(donation['food'] ?? ''),
-              color: Colors.green.shade700,
-              size: 24,
-            ),
+            child: Icon(Icons.fastfood_rounded, color: Colors.green.shade700),
           ),
           title: Text(
-            donation['food'] ?? 'Unknown Food',
+            data['food'] ?? 'Unknown Food',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -182,48 +204,19 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
             children: [
               const SizedBox(height: 4),
               Text(
-                "Quantity: ${donation['quantity'] ?? 'N/A'}",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                "Quantity: ${data['quantity'] ?? 'N/A'}",
+                style: TextStyle(color: Colors.grey.shade700),
               ),
               const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 12, color: Colors.grey.shade400),
-                  const SizedBox(width: 4),
-                  Text(
-                    formattedDate,
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                  ),
-                ],
+              Text(
+                dateStr,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
             ],
           ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.shade100.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              "Shared",
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey.shade300),
         ),
       ),
     );
-  }
-
-  IconData _getFoodIcon(String foodName) {
-    foodName = foodName.toLowerCase();
-    if (foodName.contains('apple') || foodName.contains('fruit')) return Icons.apple;
-    if (foodName.contains('bread') || foodName.contains('bakery')) return Icons.bakery_dining;
-    if (foodName.contains('rice') || foodName.contains('biryani') || foodName.contains('meal')) return Icons.restaurant;
-    if (foodName.contains('milk') || foodName.contains('drink')) return Icons.local_drink;
-    return Icons.fastfood;
   }
 }

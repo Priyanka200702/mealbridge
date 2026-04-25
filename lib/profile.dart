@@ -65,29 +65,29 @@ class _ProfilePageState extends State<ProfilePage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : isNotOrg
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Access Restricted",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const Text(
-                        "This profile page is for Organisations only.",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Go Back"),
-                      )
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Access Restricted",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                )
-              : SingleChildScrollView(
+                  const Text(
+                    "This profile page is for Organisations only.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Go Back"),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
@@ -155,35 +155,75 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Stats Section
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.green.shade700, Colors.green.shade500],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem(
+                          "Total Donations",
+                          (userData?['totalDonations'] ?? 0).toString(),
+                          Icons.volunteer_activism,
+                        ),
+                        Container(height: 40, width: 1, color: Colors.white24),
+                        _buildStatItem(
+                          "Status",
+                          "Active",
+                          Icons.verified_user_outlined,
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 32),
-                  
-                  // Statistics Section
+
+                  // Recent Donations Preview
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          label: "Total Donations",
-                          count: (userData?['totalDonations'] ?? 0).toString(),
-                          icon: Icons.favorite,
-                          color: Colors.redAccent,
+                      const Text(
+                        "Recent Donations",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          label: "People Impacted",
-                          count: ((userData?['totalDonations'] ?? 0) * 10).toString(), // Estimated impact
-                          icon: Icons.people,
-                          color: Colors.blueAccent,
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DonationHistoryPage(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          "View All",
+                          style: TextStyle(color: Colors.green.shade700),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-
-                  // Donation History Button & Preview
-                  _buildDonationHistorySection(),
-                  
+                  const SizedBox(height: 12),
+                  _buildRecentDonationsPreview(),
                   const SizedBox(height: 32),
 
                   // Details Section
@@ -280,215 +320,175 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatCard({
-    required String label,
-    required String count,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 12),
-          Text(
-            count,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDonationHistorySection() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Recent Donations",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DonationHistoryPage()),
-                );
-              },
-              child: Text(
-                "View History",
-                style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+Widget _buildStatItem(String label, String value, IconData icon) {
+  return Column(
+    children: [
+      Icon(icon, color: Colors.white, size: 28),
+      const SizedBox(height: 8),
+      Text(
+        value,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
         ),
-        const SizedBox(height: 12),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('donations_history')
-              .where('orgId', isEqualTo: user?.uid)
-              .orderBy('timestamp', descending: true)
-              .limit(2)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade100),
-                ),
-                child: const Center(
-                  child: Text(
-                    "No donations yet",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: snapshot.data!.docs.map((doc) {
-                var data = doc.data() as Map<String, dynamic>;
-                DateTime? time = (data['timestamp'] as Timestamp?)?.toDate();
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.fastfood, color: Colors.green.shade700, size: 20),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              data['food'] ?? 'Unknown',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                            ),
-                            Text(
-                              time != null ? DateFormat('MMM dd, yyyy').format(time) : 'Unknown date',
-                              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        data['quantity'] ?? '',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailTile({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.green.shade600, size: 24),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+      Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+    ],
+  );
+}
+
+Widget _buildRecentDonationsPreview() {
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('donations_history')
+        .where('orgId', isEqualTo: user?.uid)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100),
+          ),
+          child: const Center(
+            child: Text(
+              "No recent donations found",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        );
+      }
+
+      // Sort and limit locally to avoid needing a composite index
+      var docs = snapshot.data!.docs.toList();
+      docs.sort((a, b) {
+        var t1 = (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+        var t2 = (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+        if (t1 == null && t2 == null) return 0;
+        if (t1 == null) return 1;
+        if (t2 == null) return -1;
+        return t2.compareTo(t1); // descending
+      });
+      
+      var recentDocs = docs.take(2).toList();
+
+      return Column(
+        children: recentDocs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final timestamp = data['timestamp'] as Timestamp?;
+          final dateStr = timestamp != null
+              ? DateFormat('MMM dd').format(timestamp.toDate())
+              : '';
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.fastfood,
+                    color: Colors.green.shade600,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['food'] ?? 'Food',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "${data['quantity'] ?? ''}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  dateStr,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    },
+  );
+}
+
+Widget _buildDetailTile({
+  required String label,
+  required String value,
+  required IconData icon,
+}) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.green.shade600, size: 24),
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 }

@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:ngofood/firebase_options.dart';
 import 'package:ngofood/services/notification_service.dart';
 import 'package:ngofood/onboard.dart';
-import 'package:ngofood/dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

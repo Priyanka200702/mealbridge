@@ -50,44 +50,39 @@ class _AddFoodState extends State<AddFood> {
         orgName = userDoc.data()?['name'] ?? "An Organization";
       }
 
-      // Add to active foods collection
-      DocumentReference docRef = await FirebaseFirestore.instance
-          .collection('foods')
-          .add({
-            'food': _foodController.text.trim(),
-            'quantity': _quantityController.text.trim(),
-            'status': 'available',
-            'lat': position.latitude,
-            'lng': position.longitude,
-            'orgId': FirebaseAuth.instance.currentUser?.uid,
-            'orgName': orgName,
-            'expiryTime': _expiryTime != null
-                ? Timestamp.fromDate(_expiryTime!)
-                : null,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
+      final batch = FirebaseFirestore.instance.batch();
+      final firestore = FirebaseFirestore.instance;
 
-      // 🔥 Add to permanent donations_history collection
-      await FirebaseFirestore.instance
-          .collection('donations_history')
-          .add({
-            'food': _foodController.text.trim(),
-            'quantity': _quantityController.text.trim(),
-            'lat': position.latitude,
-            'lng': position.longitude,
-            'orgId': FirebaseAuth.instance.currentUser?.uid,
-            'orgName': orgName,
-            'expiryTime': _expiryTime != null
-                ? Timestamp.fromDate(_expiryTime!)
-                : null,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
+      // 1. Prepare reference for active foods collection
+      DocumentReference docRef = firestore.collection('foods').doc();
+      
+      final foodData = {
+        'food': _foodController.text.trim(),
+        'quantity': _quantityController.text.trim(),
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'orgId': FirebaseAuth.instance.currentUser?.uid,
+        'orgName': orgName,
+        'expiryTime': _expiryTime != null ? Timestamp.fromDate(_expiryTime!) : null,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
 
-      // 🔥 Increment donation count for organisation
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .update({'totalDonations': FieldValue.increment(1)});
+      // Add to foods (with status)
+      batch.set(docRef, {
+        ...foodData,
+        'status': 'available',
+      });
+
+      // 2. Add to permanent donations_history collection
+      DocumentReference historyRef = firestore.collection('donations_history').doc(docRef.id);
+      batch.set(historyRef, foodData);
+
+      // 3. Increment donation count for organisation
+      DocumentReference userRef = firestore.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+      batch.update(userRef, {'totalDonations': FieldValue.increment(1)});
+
+      // 🔥 Commit all writes efficiently as a single transaction
+      await batch.commit();
 
       // Notify nearby NGOs (within 5km)
       await NotificationService().notifyNearbyNGOs(

@@ -49,9 +49,7 @@ class _DashboardState extends State<Dashboard> {
 
   void _claimFood(BuildContext context, String id) async {
     try {
-      await FirebaseFirestore.instance.collection('foods').doc(id).update({
-        'status': 'claimed',
-      });
+      await FirebaseFirestore.instance.collection('foods').doc(id).delete();
 
       // Clear notifications for this food across all NGOs
       await NotificationService().clearNotificationsForFood(id);
