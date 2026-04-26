@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ngofood/services/notification_service.dart';
+import 'package:confetti/confetti.dart';
 
 class AddFood extends StatefulWidget {
   const AddFood({super.key});
@@ -16,6 +17,21 @@ class _AddFoodState extends State<AddFood> {
   final _quantityController = TextEditingController();
   DateTime? _expiryTime;
   bool _isLoading = false;
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    _foodController.dispose();
+    _quantityController.dispose();
+    super.dispose();
+  }
 
   void _addFood() async {
     if (_foodController.text.isEmpty ||
@@ -97,7 +113,14 @@ class _AddFoodState extends State<AddFood> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context);
+        _confettiController.play();
+        
+        // Wait for the animation to finish before popping
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -157,8 +180,10 @@ class _AddFoodState extends State<AddFood> {
         ? "Select Expiry Date and Time"
         : "${_expiryTime!.day}/${_expiryTime!.month} at ${TimeOfDay.fromDateTime(_expiryTime!).format(context)}";
 
-    return Scaffold(
-      body: Container(
+    return Stack(
+      children: [
+        Scaffold(
+          body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
@@ -359,6 +384,23 @@ class _AddFoodState extends State<AddFood> {
           ),
         ),
       ),
+    ),
+    Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive, // radiate in all directions
+            shouldLoop: false,
+            colors: const [
+              Colors.green,
+              Colors.blue,
+              Colors.pink,
+              Colors.orange,
+              Colors.purple
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -406,10 +448,4 @@ class _AddFoodState extends State<AddFood> {
     );
   }
 
-  @override
-  void dispose() {
-    _foodController.dispose();
-    _quantityController.dispose();
-    super.dispose();
-  }
 }

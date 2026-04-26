@@ -45,6 +45,10 @@ class _ProfilePageState extends State<ProfilePage> {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     bool isNGO = userData?['role']?.toString().toLowerCase() == 'ngo';
 
+    int ratingCount = userData?['ratingCount'] ?? 0;
+    double totalRating = (userData?['totalRating'] ?? 0).toDouble();
+    double averageRating = ratingCount > 0 ? (totalRating / ratingCount) : 0.0;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -144,6 +148,28 @@ class _ProfilePageState extends State<ProfilePage> {
                                       fontSize: 12,
                                       letterSpacing: 1,
                                     ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.star, color: Colors.amber.shade500, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        ratingCount > 0 ? averageRating.toStringAsFixed(1) : "New",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "($ratingCount reviews)",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -260,6 +286,23 @@ class _ProfilePageState extends State<ProfilePage> {
                         icon: Icons.location_on_outlined,
                         isDark: isDark,
                       ),
+
+                      const SizedBox(height: 32),
+                      
+                      // Reviews Section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Recent Reviews",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildReviewsList(isDark),
 
                       const SizedBox(height: 48),
 
@@ -496,6 +539,109 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsList(bool isDark) {
+    if (user == null) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('reviews')
+          .orderBy('timestamp', descending: true)
+          .limit(5)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+            ),
+            child: Center(
+              child: Text(
+                "No reviews yet.",
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final rating = data['rating'] ?? 5;
+            final comment = data['comment'] ?? '';
+            final reviewerName = data['reviewerName'] ?? 'Anonymous';
+            final timestamp = data['timestamp'] as Timestamp?;
+            final dateStr = timestamp != null ? DateFormat('MMM dd, yyyy').format(timestamp.toDate()) : '';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        reviewerName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        size: 16,
+                        color: Colors.amber.shade500,
+                      );
+                    }),
+                  ),
+                  if (comment.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      comment,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

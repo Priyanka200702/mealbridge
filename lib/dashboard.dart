@@ -10,6 +10,7 @@ import 'package:ngofood/widgets/sidebar_layout.dart';
 import 'package:ngofood/widgets/org_delivery_panel.dart';
 import 'package:ngofood/widgets/countdown_timer.dart';
 import 'package:ngofood/services/notification_service.dart';
+import 'package:ngofood/widgets/review_listener.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -85,8 +86,10 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return SidebarLayout(
-      title: "Dashboard",
+    return ReviewListener(
+      isNGO: false,
+      child: SidebarLayout(
+        title: "Dashboard",
       activeMenu: "Dashboard",
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -418,6 +421,6 @@ class _DashboardState extends State<Dashboard> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

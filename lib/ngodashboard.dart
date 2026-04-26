@@ -10,6 +10,7 @@ import 'package:ngofood/widgets/sidebar_layout.dart';
 import 'package:intl/intl.dart';
 import 'package:ngofood/widgets/route_preview_modal.dart';
 import 'package:ngofood/widgets/ngo_delivery_panel.dart';
+import 'package:ngofood/widgets/review_listener.dart';
 import 'dart:math';
 
 class NGODashboard extends StatefulWidget {
@@ -252,8 +253,10 @@ class _NGODashboardState extends State<NGODashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return SidebarLayout(
-      title: "Dashboard",
+    return ReviewListener(
+      isNGO: true,
+      child: SidebarLayout(
+        title: "Dashboard",
       activeMenu: "Dashboard",
       child: CustomScrollView(
         slivers: [
@@ -595,6 +598,6 @@ class _NGODashboardState extends State<NGODashboard> {
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
       ),
-    );
+    ));
   }
 }
