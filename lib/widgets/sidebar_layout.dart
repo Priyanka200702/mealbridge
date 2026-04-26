@@ -43,7 +43,10 @@ class _SidebarLayoutState extends State<SidebarLayout> {
   void _loadProfile() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      var doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (mounted) {
         setState(() {
           var data = doc.data();
@@ -66,12 +69,20 @@ class _SidebarLayoutState extends State<SidebarLayout> {
     }
   }
 
-  Widget _buildMenuItem(IconData icon, String title, bool isActive, VoidCallback onTap, bool isDark) {
+  Widget _buildMenuItem(
+    IconData icon,
+    String title,
+    bool isActive,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         gradient: isActive
-            ? const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF4ADE80)])
+            ? const LinearGradient(
+                colors: [Color(0xFF22C55E), Color(0xFF4ADE80)],
+              )
             : null,
         borderRadius: BorderRadius.circular(12),
       ),
@@ -86,14 +97,18 @@ class _SidebarLayoutState extends State<SidebarLayout> {
               children: [
                 Icon(
                   icon,
-                  color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: isActive
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   size: 22,
                 ),
                 const SizedBox(width: 16),
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                    color: isActive
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),
@@ -158,72 +173,143 @@ class _SidebarLayoutState extends State<SidebarLayout> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
-                  },
-                  child: Text(
-                    "Edit Profile",
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF16A34A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+                // GestureDetector(
+                //   onTap: () {
+                //     if (Scaffold.of(context).isDrawerOpen) Navigator.pop(context);
+                //     Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
+                //   },
+                //   child: Text(
+                //     "Edit Profile",
+                //     style: GoogleFonts.inter(
+                //       fontSize: 13,
+                //       color: const Color(0xFF16A34A),
+                //       fontWeight: FontWeight.w500,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
-          
+
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _buildMenuItem(Icons.dashboard_outlined, "Dashboard", widget.activeMenu == "Dashboard", () async {
-                  if (widget.activeMenu != "Dashboard") {
-                     User? user = FirebaseAuth.instance.currentUser;
-                     if(user != null) {
-                        var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                _buildMenuItem(
+                  Icons.dashboard_outlined,
+                  "Dashboard",
+                  widget.activeMenu == "Dashboard",
+                  () async {
+                    if (widget.activeMenu != "Dashboard") {
+                      User? user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        var doc = await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .get();
                         String role = doc.data()?['role'] ?? 'ngo';
                         if (!context.mounted) return;
                         if (role == 'ngo') {
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const NGODashboard()));
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NGODashboard(),
+                            ),
+                          );
                         } else {
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const Dashboard()));
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const Dashboard(),
+                            ),
+                          );
                         }
-                     }
-                  }
-                }, isDark),
-                _buildMenuItem(Icons.history_outlined, "History", widget.activeMenu == "History", () {
-                  if (widget.activeMenu != "History") {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => DonationHistoryPage(isNGO: role == 'ngo')));
-                  }
-                }, isDark),
-                _buildMenuItem(Icons.person_outline, "Profile", widget.activeMenu == "Profile", () {
-                  if (widget.activeMenu != "Profile") {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
-                  }
-                }, isDark),
-                _buildMenuItem(Icons.leaderboard_outlined, "Leaderboard", widget.activeMenu == "Leaderboard", () {
-                   if (widget.activeMenu != "Leaderboard") {
-                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LeaderboardPage()));
-                   }
-                }, isDark),
-                _buildMenuItem(Icons.contact_support_outlined, "Contact Us", widget.activeMenu == "Contact Us", () {
-                   if (widget.activeMenu != "Contact Us") {
-                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ContactUsPage()));
-                   }
-                }, isDark),
-                _buildMenuItem(Icons.help_outline, "FAQ", widget.activeMenu == "FAQ", () {
-                   if (widget.activeMenu != "FAQ") {
-                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FAQPage()));
-                   }
-                }, isDark),
+                      }
+                    }
+                  },
+                  isDark,
+                ),
+                _buildMenuItem(
+                  Icons.history_outlined,
+                  "History",
+                  widget.activeMenu == "History",
+                  () {
+                    if (widget.activeMenu != "History") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              DonationHistoryPage(isNGO: role == 'ngo'),
+                        ),
+                      );
+                    }
+                  },
+                  isDark,
+                ),
+                _buildMenuItem(
+                  Icons.person_outline,
+                  "Profile",
+                  widget.activeMenu == "Profile",
+                  () {
+                    if (widget.activeMenu != "Profile") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProfilePage()),
+                      );
+                    }
+                  },
+                  isDark,
+                ),
+                _buildMenuItem(
+                  Icons.leaderboard_outlined,
+                  "Leaderboard",
+                  widget.activeMenu == "Leaderboard",
+                  () {
+                    if (widget.activeMenu != "Leaderboard") {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LeaderboardPage(),
+                        ),
+                      );
+                    }
+                  },
+                  isDark,
+                ),
+                _buildMenuItem(
+                  Icons.contact_support_outlined,
+                  "Contact Us",
+                  widget.activeMenu == "Contact Us",
+                  () {
+                    if (widget.activeMenu != "Contact Us") {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ContactUsPage(),
+                        ),
+                      );
+                    }
+                  },
+                  isDark,
+                ),
+                _buildMenuItem(
+                  Icons.help_outline,
+                  "FAQ",
+                  widget.activeMenu == "FAQ",
+                  () {
+                    if (widget.activeMenu != "FAQ") {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FAQPage()),
+                      );
+                    }
+                  },
+                  isDark,
+                ),
               ],
             ),
           ),
-          
+
           // Theme Toggle and Logout
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -249,7 +335,13 @@ class _SidebarLayoutState extends State<SidebarLayout> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-            child: _buildMenuItem(Icons.logout_outlined, "Logout", false, _logout, isDark),
+            child: _buildMenuItem(
+              Icons.logout_outlined,
+              "Logout",
+              false,
+              _logout,
+              isDark,
+            ),
           ),
         ],
       ),
@@ -268,14 +360,23 @@ class _SidebarLayoutState extends State<SidebarLayout> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           automaticallyImplyLeading: false,
-          leading: isDesktop ? null : Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.menu, color: Theme.of(context).colorScheme.onSurface),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
+          leading: isDesktop
+              ? null
+              : Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(
+                      Icons.menu,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
           title: Text(
-            "${role == 'organization' ? 'Organisation Dashboard' : role == 'ngo' ? 'NGO Dashboard' : 'Dashboard'} • Welcome, $orgName!",
+            "${role == 'organization'
+                ? 'Organisation Dashboard'
+                : role == 'ngo'
+                ? 'NGO Dashboard'
+                : 'Dashboard'} • Welcome, $orgName!",
             style: GoogleFonts.inter(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 22,
@@ -297,7 +398,10 @@ class _SidebarLayoutState extends State<SidebarLayout> {
                   alignment: Alignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.notifications_none, color: Theme.of(context).colorScheme.onSurface),
+                      icon: Icon(
+                        Icons.notifications_none,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       onPressed: () {
                         showModalBottomSheet(
                           context: context,
@@ -347,9 +451,16 @@ class _SidebarLayoutState extends State<SidebarLayout> {
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: IconButton(
-                icon: Icon(Icons.account_circle, color: Theme.of(context).colorScheme.onSurface, size: 28),
+                icon: Icon(
+                  Icons.account_circle,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  size: 28,
+                ),
                 onPressed: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
                 },
               ),
             ),
@@ -377,9 +488,7 @@ class _SidebarLayoutState extends State<SidebarLayout> {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: header,
-          drawer: Drawer(
-            child: _buildSidebarContent(context, isDark),
-          ),
+          drawer: Drawer(child: _buildSidebarContent(context, isDark)),
           body: widget.child,
         );
       },
