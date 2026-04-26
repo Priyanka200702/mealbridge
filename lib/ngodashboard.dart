@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ngofood/services/notification_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ngofood/widgets/sidebar_layout.dart';
+import 'package:intl/intl.dart';
+import 'package:ngofood/widgets/route_preview_modal.dart';
 
 class NGODashboard extends StatefulWidget {
   const NGODashboard({super.key});
@@ -95,7 +97,11 @@ class _NGODashboardState extends State<NGODashboard> {
         ngoName = userDoc.data()?['name'] ?? "An NGO";
       }
 
-      await FirebaseFirestore.instance.collection('foods').doc(id).delete();
+      await FirebaseFirestore.instance.collection('foods').doc(id).update({
+        'status': 'claimed',
+        'ngoId': user?.uid,
+        'pickupTime': FieldValue.serverTimestamp(),
+      });
       await NotificationService().clearNotificationsForFood(id);
 
       if (orgId != null) {
@@ -122,26 +128,33 @@ class _NGODashboardState extends State<NGODashboard> {
     }
   }
 
-  void _showClaimDialog(BuildContext context, String foodId, String foodName, String orgName) {
+  void _showRoutePreviewModal(BuildContext context, String foodId, Map<String, dynamic> data) {
+    if (userLat == null || userLng == null || data['lat'] == null || data['lng'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Location data not available for routing."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    String? expiryTimeStr;
+    if (data['expiryTime'] != null) {
+      Timestamp expiryTimestamp = data['expiryTime'] as Timestamp;
+      expiryTimeStr = DateFormat('MMM dd, hh:mm a').format(expiryTimestamp.toDate());
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Confirm Claim"),
-        content: Text("Are you sure you want to claim $foodName from $orgName?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("No", style: TextStyle(color: Colors.grey.shade600)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _claimFood(context, foodId);
-            },
-            child: const Text("Yes", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-          ),
-        ],
+      builder: (context) => RoutePreviewModal(
+        foodId: foodId,
+        foodName: data['food'] ?? 'Food',
+        quantity: data['quantity']?.toString() ?? 'N/A',
+        orgName: data['orgName'] ?? 'Organisation',
+        expiryTime: expiryTimeStr,
+        restaurantLat: (data['lat'] as num).toDouble(),
+        restaurantLng: (data['lng'] as num).toDouble(),
+        ngoLat: userLat!,
+        ngoLng: userLng!,
+        onConfirm: (id) => _claimFood(context, id),
       ),
     );
   }
@@ -454,7 +467,7 @@ class _NGODashboardState extends State<NGODashboard> {
                                 ),
                                 const SizedBox(height: 12),
                                 InkWell(
-                                  onTap: () => _showClaimDialog(context, doc.id, data['food'] ?? 'Food', data['orgName'] ?? 'Organisation'),
+                                  onTap: () => _showRoutePreviewModal(context, doc.id, data),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
