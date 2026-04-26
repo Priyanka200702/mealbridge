@@ -161,7 +161,11 @@ class _DashboardState extends State<Dashboard> {
                     
                     Text(
                       "Nearby NGOs",
-                      style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: GoogleFonts.inter(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold, 
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     
@@ -170,10 +174,14 @@ class _DashboardState extends State<Dashboard> {
                       height: 260,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 8)),
+                          BoxShadow(
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.05), 
+                            blurRadius: 15, 
+                            offset: const Offset(0, 8),
+                          ),
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -230,7 +238,11 @@ class _DashboardState extends State<Dashboard> {
                     const SizedBox(height: 32),
                     Text(
                       "Your Active Listings",
-                      style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      style: GoogleFonts.inter(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold, 
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ],
                 ),
@@ -273,7 +285,10 @@ class _DashboardState extends State<Dashboard> {
                           const SizedBox(height: 16),
                           Text(
                             "You have no active listings.",
-                            style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 16),
+                            style: GoogleFonts.inter(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
@@ -293,10 +308,14 @@ class _DashboardState extends State<Dashboard> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                            BoxShadow(
+                              color: Theme.of(context).shadowColor.withValues(alpha: 0.03), 
+                              blurRadius: 10, 
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
                         child: Padding(
@@ -307,7 +326,7 @@ class _DashboardState extends State<Dashboard> {
                                 width: 60,
                                 height: 60,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(Icons.fastfood, color: Color(0xFF16A34A), size: 28),
@@ -317,26 +336,36 @@ class _DashboardState extends State<Dashboard> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      data['food'] ?? 'Food Package',
-                                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
-                                    ),
+                                      Text(
+                                        data['food'] ?? 'Food Package',
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold, 
+                                          fontSize: 16,
+                                          color: Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                      ),
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(Icons.inventory_2_outlined, size: 14, color: Colors.grey.shade600),
+                                        Icon(Icons.inventory_2_outlined, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          data['quantity'] ?? 'N/A',
-                                          style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 13),
-                                        ),
+                                          Text(
+                                            data['quantity'] ?? 'N/A',
+                                            style: GoogleFonts.inter(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                                              fontSize: 13,
+                                            ),
+                                          ),
                                         const SizedBox(width: 12),
-                                        Icon(Icons.access_time, size: 14, color: Colors.grey.shade600),
+                                        Icon(Icons.access_time, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          timeStr,
-                                          style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 13),
-                                        ),
+                                          Text(
+                                            timeStr,
+                                            style: GoogleFonts.inter(
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                                              fontSize: 13,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                     if (data['expiryTime'] != null) ...[

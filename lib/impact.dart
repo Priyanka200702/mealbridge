@@ -8,11 +8,13 @@ class ImpactScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B5E20), Color(0xFF43A047), Color(0xFFA5D6A7)],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [const Color(0xFF064E3B), const Color(0xFF065F46), const Color(0xFF0F172A)]
+                : [const Color(0xFF1B5E20), const Color(0xFF43A047), const Color(0xFFA5D6A7)],
           ),
         ),
         child: SafeArea(
@@ -147,7 +149,7 @@ class StatCard extends StatelessWidget {
       width: 90,
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

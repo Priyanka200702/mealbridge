@@ -128,7 +128,7 @@ class LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                ? [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor]
                 : [Colors.green.shade800, Colors.green.shade500, Colors.green.shade200],
           ),
         ),
@@ -149,7 +149,7 @@ class LoginScreenState extends State<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF334155) : Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
@@ -192,14 +192,14 @@ class LoginScreenState extends State<LoginScreen> {
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(50),
                               topRight: Radius.circular(50),
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
+                                color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 spreadRadius: 5,
                               ),
@@ -215,14 +215,14 @@ class LoginScreenState extends State<LoginScreen> {
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : Colors.black87,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
                                   "Login to your account to continue",
-                                  style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey, fontSize: 14),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 40),
@@ -311,7 +311,7 @@ class LoginScreenState extends State<LoginScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("Don't have an account?", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.black87)),
+                                    Text("Don't have an account?", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                     TextButton(
                                       onPressed: () {
                                         Navigator.push(
@@ -370,18 +370,18 @@ class LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           prefixIcon: Icon(icon, color: Colors.green.shade600),
           suffixIcon: isPassword
               ? GestureDetector(

@@ -13,9 +13,9 @@ class NotificationDialog extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
         ),
@@ -27,12 +27,12 @@ class NotificationDialog extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Notifications",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               IconButton(
@@ -77,12 +77,12 @@ class NotificationDialog extends StatelessWidget {
               }).toList();
 
               if (activeNotifications.isEmpty) {
-                return const Center(
+                return Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: Text(
                       "no new notification",
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 );
@@ -104,13 +104,13 @@ class NotificationDialog extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: data['isRead'] == true 
-                            ? Colors.grey.shade50 
-                            : Colors.green.shade50,
+                            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)
+                            : Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(15),
                         border: Border.all(
                           color: data['isRead'] == true
-                              ? Colors.grey.shade200
-                              : Colors.green.shade100,
+                              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)
+                              : Colors.green.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -141,7 +141,7 @@ class NotificationDialog extends StatelessWidget {
                           const SizedBox(height: 5),
                           Text(
                             data['body'] ?? '',
-                            style: TextStyle(color: Colors.grey.shade700),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 5),
                           Text(
@@ -150,7 +150,7 @@ class NotificationDialog extends StatelessWidget {
                                 : 'Just now',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade500,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                             ),
                           ),
                         ],

@@ -50,29 +50,52 @@ class MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF16A34A),
           primary: const Color(0xFF16A34A),
+          onPrimary: Colors.white,
           secondary: const Color(0xFF22C55E),
-          surface: const Color(0xFFF8FAFC),
+          onSecondary: Colors.white,
+          surface: Colors.white,
+          onSurface: const Color(0xFF0F172A),
+          onSurfaceVariant: const Color(0xFF64748B),
           brightness: Brightness.light,
         ),
         textTheme: GoogleFonts.interTextTheme(
-          ThemeData.light().textTheme,
+          ThemeData.light().textTheme.apply(
+            bodyColor: const Color(0xFF0F172A),
+            displayColor: const Color(0xFF0F172A),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         primaryColor: const Color(0xFF16A34A),
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        scaffoldBackgroundColor: const Color(0xFF020617), // Deeper dark for background
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF16A34A),
           primary: const Color(0xFF22C55E),
+          onPrimary: Colors.white,
           secondary: const Color(0xFF4ADE80),
-          // background is deprecated, surface is already defined below
-          surface: const Color(0xFF1E293B),
+          onSecondary: Colors.white,
+          surface: const Color(0xFF0F172A), // Slightly lighter than background for cards
+          onSurface: const Color(0xFFF8FAFC),
+          onSurfaceVariant: const Color(0xFF94A3B8),
           brightness: Brightness.dark,
         ),
         textTheme: GoogleFonts.interTextTheme(
-          ThemeData.dark().textTheme,
+          ThemeData.dark().textTheme.apply(
+            bodyColor: const Color(0xFFF8FAFC),
+            displayColor: const Color(0xFFF8FAFC),
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: Color(0xFF0F172A),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
       home: const OnboardingPage(),

@@ -166,7 +166,7 @@ class _AddFoodState extends State<AddFood> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                ? [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor]
                 : [Colors.green.shade800, Colors.green.shade500, Colors.green.shade200],
           ),
         ),
@@ -210,14 +210,14 @@ class _AddFoodState extends State<AddFood> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(50),
                           topRight: Radius.circular(50),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
                             blurRadius: 10,
                             spreadRadius: 5,
                           ),
@@ -233,14 +233,14 @@ class _AddFoodState extends State<AddFood> {
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             Text(
                               "Fill in the details to provide food for those in need.",
-                              style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey, fontSize: 14),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 40),
@@ -269,7 +269,7 @@ class _AddFoodState extends State<AddFood> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -281,9 +281,9 @@ class _AddFoodState extends State<AddFood> {
                                       vertical: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                                      border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
                                     ),
                                     child: Row(
                                       children: [
@@ -297,8 +297,8 @@ class _AddFoodState extends State<AddFood> {
                                           expiryLabel,
                                           style: TextStyle(
                                             color: _expiryTime == null
-                                                ? Colors.grey.shade500
-                                                : (isDark ? Colors.white : Colors.black87),
+                                                ? Theme.of(context).colorScheme.onSurfaceVariant
+                                                : Theme.of(context).colorScheme.onSurface,
                                             fontSize: 14,
                                           ),
                                         ),
@@ -377,22 +377,22 @@ class _AddFoodState extends State<AddFood> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+            border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
           ),
           child: TextField(
             controller: controller,
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: isDark ? Colors.grey.shade600 : Colors.grey.shade400, fontSize: 14),
+              hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
               prefixIcon: Icon(icon, color: Colors.green, size: 22),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(

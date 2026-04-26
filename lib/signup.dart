@@ -226,7 +226,7 @@ class SignupPageState extends State<SignupPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                ? [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor]
                 : [Colors.green.shade800, Colors.green.shade500, Colors.green.shade200],
           ),
         ),
@@ -265,7 +265,7 @@ class SignupPageState extends State<SignupPage> {
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(50),
                               topRight: Radius.circular(50),
@@ -283,7 +283,7 @@ class SignupPageState extends State<SignupPage> {
                                 Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Row(
@@ -301,7 +301,7 @@ class SignupPageState extends State<SignupPage> {
                                               child: Text(
                                                 "Organization",
                                                 style: TextStyle(
-                                                  color: isOrg ? Colors.white : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                  color: isOrg ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -322,7 +322,7 @@ class SignupPageState extends State<SignupPage> {
                                               child: Text(
                                                 "NGO",
                                                 style: TextStyle(
-                                                  color: !isOrg ? Colors.white : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                  color: !isOrg ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -438,7 +438,7 @@ class SignupPageState extends State<SignupPage> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("Already have an account?", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.black87)),
+                                    Text("Already have an account?", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
                                       child: const Text(
@@ -492,7 +492,7 @@ class SignupPageState extends State<SignupPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 8),
@@ -500,12 +500,12 @@ class SignupPageState extends State<SignupPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: _addressString != null
                   ? Colors.green.shade300
-                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -528,7 +528,7 @@ class SignupPageState extends State<SignupPage> {
                             _addressString!,
                             style: TextStyle(
                               fontSize: 13,
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -545,7 +545,7 @@ class SignupPageState extends State<SignupPage> {
                         "No location detected yet",
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade400,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
               ),
@@ -605,12 +605,12 @@ class SignupPageState extends State<SignupPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.transparent),
-        boxShadow: isDark ? null : [
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -620,10 +620,10 @@ class SignupPageState extends State<SignupPage> {
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           prefixIcon: Icon(icon, color: Colors.green.shade600),
           suffixIcon: isPassword
               ? GestureDetector(

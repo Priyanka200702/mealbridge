@@ -19,14 +19,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
       child: Text(
         "${index + 1}",
         style: GoogleFonts.inter(
-          color: Colors.grey.shade600,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),
@@ -52,14 +52,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Organizations making the biggest impact this month.",
                   style: GoogleFonts.inter(
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 15,
                   ),
                 ),
@@ -92,7 +92,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   return Center(
                     child: Text(
                       "No data available.",
-                      style: GoogleFonts.inter(color: Colors.grey),
+                      style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   );
                 }
@@ -108,14 +108,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: isTop3 
                             ? Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3), width: 1.5)
                             : Border.all(color: Colors.transparent),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -131,12 +131,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: isTop3 ? const Color(0xFFF0FDF4) : Colors.grey.shade50,
+                                color: isTop3 
+                                    ? const Color(0xFFF0FDF4).withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.1 : 1.0)
+                                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 Icons.business,
-                                color: isTop3 ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                                color: isTop3 ? const Color(0xFF16A34A) : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -149,14 +151,14 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                     style: GoogleFonts.inter(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: Colors.black87,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "Joined recently",
                                     style: GoogleFonts.inter(
-                                      color: Colors.grey.shade500,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -177,7 +179,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                 Text(
                                   "Meals",
                                   style: GoogleFonts.inter(
-                                    color: Colors.grey.shade500,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),

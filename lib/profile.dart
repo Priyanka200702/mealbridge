@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ngofood/login.dart';
 import 'package:ngofood/donation_history_page.dart';
+import 'package:ngofood/edit_profile.dart';
 import 'package:intl/intl.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -31,14 +32,6 @@ class _ProfilePageState extends State<ProfilePage> {
           .doc(user!.uid)
           .get();
       if (mounted) {
-        String role = doc.data()?['role']?.toString().toLowerCase() ?? '';
-        if (role != 'organization') {
-          setState(() {
-            isNotOrg = true;
-            isLoading = false;
-          });
-          return;
-        }
         setState(() {
           userData = doc.data();
           isLoading = false;
@@ -50,45 +43,42 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isNGO = userData?['role']?.toString().toLowerCase() == 'ngo';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Organisation Profile"),
+        title: Text(isNGO ? "NGO Profile" : "Organisation Profile"),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: isDark ? Colors.white : Colors.black87,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () async {
+              if (userData != null) {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditProfilePage(userData: userData!),
+                  ),
+                );
+                if (result == true) {
+                  fetchUserData();
+                }
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : isNotOrg
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Access Restricted",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-                  ),
-                  Text(
-                    "This profile page is for Organisations only.",
-                    style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Go Back"),
-                  ),
-                ],
-              ),
-            )
           : Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 600),
@@ -100,11 +90,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(25),
-                          boxShadow: isDark ? null : [
+                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
                               blurRadius: 15,
                               offset: const Offset(0, 8),
                             ),
@@ -123,10 +113,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                   width: 2,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.business,
-                                size: 40,
-                                color: Colors.green.shade700,
+                              child: Center(
+                                child: Text(
+                                  userData?['profileEmoji'] ?? (isNGO ? '🤝' : '🏢'),
+                                  style: const TextStyle(fontSize: 40),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 20),
@@ -139,7 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : Colors.black87,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -184,15 +175,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildStatItem(
-                              "Total Donations",
-                              (userData?['totalDonations'] ?? 0).toString(),
+                              isNGO ? "Total Received" : "Total Donations",
+                              (userData?[isNGO ? 'totalReceived' : 'totalDonations'] ?? 0).toString(),
                               Icons.volunteer_activism,
                             ),
                             Container(height: 40, width: 1, color: Colors.white24),
                             _buildStatItem(
-                              "Status",
-                              "Active",
-                              Icons.verified_user_outlined,
+                              isNGO ? "Deliveries" : "Status",
+                              isNGO ? (userData?['totalDeliveries'] ?? 0).toString() : "Active",
+                              isNGO ? Icons.delivery_dining : Icons.verified_user_outlined,
                             ),
                           ],
                         ),
@@ -204,11 +195,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Recent Donations",
+                            isNGO ? "Recent Claims" : "Recent Donations",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           TextButton(
@@ -216,7 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const DonationHistoryPage(),
+                                  builder: (_) => DonationHistoryPage(isNGO: isNGO),
                                 ),
                               );
                             },
@@ -228,18 +219,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildRecentDonationsPreview(isDark),
+                      _buildRecentDonationsPreview(isDark, isNGO),
                       const SizedBox(height: 32),
 
                       // Details Section
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          "Organisation Details",
+                          isNGO ? "NGO Details" : "Organisation Details",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -348,25 +339,25 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildRecentDonationsPreview(bool isDark) {
+  Widget _buildRecentDonationsPreview(bool isDark, bool isNGO) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('donations_history')
-          .where('orgId', isEqualTo: user?.uid)
+          .where(isNGO ? 'ngoId' : 'orgId', isEqualTo: user?.uid)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isDark ? Colors.transparent : Colors.grey.shade100),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
             ),
             child: Center(
               child: Text(
                 "No recent donations found",
-                style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           );
@@ -396,11 +387,11 @@ class _ProfilePageState extends State<ProfilePage> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: isDark ? null : [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -427,7 +418,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Text(
                           data['food'] ?? 'Food',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                         ),
                         Text(
                           "${data['quantity'] ?? ''}",
@@ -441,7 +435,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   Text(
                     dateStr,
-                    style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -462,11 +459,11 @@ class _ProfilePageState extends State<ProfilePage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: isDark ? null : [
+        boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -483,13 +480,13 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade500, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),

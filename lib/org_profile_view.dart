@@ -11,13 +11,13 @@ class OrgProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Organisation Profile"),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black87,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () => Navigator.pop(context),
@@ -34,10 +34,10 @@ class OrgProfileView extends StatelessWidget {
           }
 
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(
+            return Center(
               child: Text(
                 "Organisation not found",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
               ),
             );
           }
@@ -52,11 +52,11 @@ class OrgProfileView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
@@ -68,26 +68,26 @@ class OrgProfileView extends StatelessWidget {
                         width: 90,
                         height: 90,
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.green.shade200,
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                             width: 3,
                           ),
                         ),
                         child: Icon(
                           Icons.business,
                           size: 44,
-                          color: Colors.green.shade700,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         data['name'] ?? 'Organisation',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -98,7 +98,7 @@ class OrgProfileView extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -106,7 +106,7 @@ class OrgProfileView extends StatelessWidget {
                               .toString()
                               .toUpperCase(),
                           style: TextStyle(
-                            color: Colors.green.shade700,
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                             letterSpacing: 1,
@@ -119,30 +119,33 @@ class OrgProfileView extends StatelessWidget {
                 const SizedBox(height: 28),
 
                 // ── Contact Details ──
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     "Contact Details",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 _buildDetailTile(
+                  context: context,
                   label: "Email",
                   value: data['email'] ?? 'Not provided',
                   icon: Icons.email_outlined,
                 ),
                 _buildDetailTile(
+                  context: context,
                   label: "Phone",
                   value: data['phone'] ?? 'Not provided',
                   icon: Icons.phone_outlined,
                 ),
                 _buildDetailTile(
+                  context: context,
                   label: "Address",
                   value: data['address'] ?? 'Not provided',
                   icon: Icons.location_on_outlined,
@@ -156,6 +159,7 @@ class OrgProfileView extends StatelessWidget {
   }
 
   Widget _buildDetailTile({
+    required BuildContext context,
     required String label,
     required String value,
     required IconData icon,
@@ -164,11 +168,11 @@ class OrgProfileView extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -185,13 +189,13 @@ class OrgProfileView extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.black87,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),

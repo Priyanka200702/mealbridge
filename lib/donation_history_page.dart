@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
 class DonationHistoryPage extends StatefulWidget {
-  const DonationHistoryPage({super.key});
+  final bool isNGO;
+  const DonationHistoryPage({super.key, this.isNGO = false});
 
   @override
   State<DonationHistoryPage> createState() => _DonationHistoryPageState();
@@ -17,22 +18,22 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          "Donation History",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+        title: Text(
+          widget.isNGO ? "Received History" : "Donation History",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list, color: Colors.black87),
+            icon: Icon(Icons.filter_list, color: Theme.of(context).colorScheme.onSurface),
             onSelected: (value) {
               setState(() {
                 _filter = value;
@@ -53,7 +54,7 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
               children: [
                 Text(
                   "Showing: ",
-                  style: TextStyle(color: Colors.grey.shade600),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 Text(
                   _filter,
@@ -121,7 +122,7 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
   Stream<QuerySnapshot> _getStream() {
     return FirebaseFirestore.instance
         .collection('donations_history')
-        .where('orgId', isEqualTo: _uid)
+        .where(widget.isNGO ? 'ngoId' : 'orgId', isEqualTo: _uid)
         .snapshots();
   }
 
@@ -130,20 +131,20 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_rounded, size: 80, color: Colors.grey.shade300),
+          Icon(Icons.history_rounded, size: 80, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
           const SizedBox(height: 16),
-          const Text(
-            "No donations yet",
+          Text(
+            widget.isNGO ? "No receipts yet" : "No donations yet",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            "Your donation history will appear here.",
-            style: TextStyle(color: Colors.grey.shade400),
+            widget.isNGO ? "Your received history will appear here." : "Your donation history will appear here.",
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
           ),
         ],
       ),
@@ -171,11 +172,11 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -186,17 +187,17 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.fastfood_rounded, color: Colors.green.shade700),
+            child: Icon(Icons.fastfood_rounded, color: Theme.of(context).colorScheme.primary),
           ),
           title: Text(
             data['food'] ?? 'Unknown Food',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           subtitle: Column(
@@ -205,16 +206,27 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
               const SizedBox(height: 4),
               Text(
                 "Quantity: ${data['quantity'] ?? 'N/A'}",
-                style: TextStyle(color: Colors.grey.shade700),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.isNGO 
+                  ? "From: ${data['orgName'] ?? 'Unknown Org'}" 
+                  : "Claimed by: ${data['ngoName'] ?? 'Not yet claimed'}",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 dateStr,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
               ),
             ],
           ),
-          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey.shade300),
+          trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2)),
         ),
       ),
     );

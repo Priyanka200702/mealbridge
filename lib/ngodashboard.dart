@@ -109,6 +109,19 @@ class _NGODashboardState extends State<NGODashboard> {
         'ngoId': user?.uid,
         'pickupTime': FieldValue.serverTimestamp(),
       });
+
+      // Update history document as well
+      await FirebaseFirestore.instance.collection('donations_history').doc(id).update({
+        'ngoId': user?.uid,
+        'ngoName': ngoName,
+      });
+
+      // Increment totalReceived for the NGO
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'totalReceived': FieldValue.increment(1),
+        });
+      }
       await NotificationService().clearNotificationsForFood(id);
 
       if (orgId != null) {
@@ -202,6 +215,41 @@ class _NGODashboardState extends State<NGODashboard> {
     );
   }
 
+  Widget _buildNoActiveOrdersWidget(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.assignment_outlined, size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+          const SizedBox(height: 12),
+          Text(
+            "No Active Orders",
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Claim a listing to start a delivery",
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SidebarLayout(
@@ -216,35 +264,47 @@ class _NGODashboardState extends State<NGODashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // STATISTIC CARDS
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth < 600) {
-                        return Column(
-                          children: [
-                            _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant),
-                            const SizedBox(height: 16),
-                            NgoDeliveryPanel(
-                              ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
-                              fallbackWidget: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
-                            ),
-                          ],
-                        );
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).snapshots(),
+                    builder: (context, snapshot) {
+                      String mealsCount = "0";
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        var data = snapshot.data!.data() as Map<String, dynamic>;
+                        mealsCount = (data['totalReceived'] ?? 0).toString();
                       }
-                      return Row(
-                        children: [
-                          Expanded(child: _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant)),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: NgoDeliveryPanel(
-                              ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
-                              fallbackWidget: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
-                            ),
-                          ),
-                        ],
+
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth < 600) {
+                            return Column(
+                              children: [
+                                _buildStatCard("Meals Received", mealsCount, const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant),
+                                const SizedBox(height: 16),
+                                NgoDeliveryPanel(
+                                  ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                  fallbackWidget: _buildNoActiveOrdersWidget(context),
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(child: _buildStatCard("Meals Received", mealsCount, const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant)),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                child: NgoDeliveryPanel(
+                                  ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                  fallbackWidget: _buildNoActiveOrdersWidget(context),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                  // The NgoDeliveryPanel was moved to the stats row above.
                   
                   // NEARBY FOOD LISTINGS HEADER
                   Row(
@@ -252,7 +312,11 @@ class _NGODashboardState extends State<NGODashboard> {
                     children: [
                       Text(
                         "Nearby Food Listings",
-                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: GoogleFonts.inter(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold, 
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -280,10 +344,14 @@ class _NGODashboardState extends State<NGODashboard> {
                     height: 260,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 8)),
+                        BoxShadow(
+                          color: Theme.of(context).shadowColor.withValues(alpha: 0.05), 
+                          blurRadius: 15, 
+                          offset: const Offset(0, 8),
+                        ),
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -294,7 +362,7 @@ class _NGODashboardState extends State<NGODashboard> {
                               children: [
                                 const CircularProgressIndicator(),
                                 const SizedBox(height: 16),
-                                Text("Waiting for location...", style: TextStyle(color: Colors.grey.shade600)),
+                                Text("Waiting for location...", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                               ],
                             ),
                           )
@@ -346,7 +414,11 @@ class _NGODashboardState extends State<NGODashboard> {
                   const SizedBox(height: 32),
                   Text(
                     "Urgent Food Requests",
-                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: GoogleFonts.inter(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold, 
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -383,7 +455,7 @@ class _NGODashboardState extends State<NGODashboard> {
                         const SizedBox(height: 16),
                         Text(
                           userLat == null ? "Waiting for location..." : "No food available within 5km",
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -416,10 +488,14 @@ class _NGODashboardState extends State<NGODashboard> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                          BoxShadow(
+                            color: Theme.of(context).shadowColor.withValues(alpha: 0.04), 
+                            blurRadius: 10, 
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Padding(
@@ -430,7 +506,7 @@ class _NGODashboardState extends State<NGODashboard> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(12),
                                 image: const DecorationImage(
                                   image: NetworkImage('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&q=80'),
@@ -443,10 +519,14 @@ class _NGODashboardState extends State<NGODashboard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    data['orgName'] ?? data['name'] ?? 'Restaurant',
-                                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
+                                    Text(
+                                      data['orgName'] ?? data['name'] ?? 'Restaurant',
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.bold, 
+                                        fontSize: 16,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
@@ -454,14 +534,20 @@ class _NGODashboardState extends State<NGODashboard> {
                                       const SizedBox(width: 4),
                                       Text(
                                         "${distanceKm.toStringAsFixed(1)} km • $timeStr",
-                                        style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 12),
+                                        style: GoogleFonts.inter(
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     data['food'] ?? 'Food Package',
-                                    style: GoogleFonts.inter(color: Colors.black87, fontSize: 14),
+                                    style: GoogleFonts.inter(
+                                      color: Theme.of(context).colorScheme.onSurface, 
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ],
                               ),
