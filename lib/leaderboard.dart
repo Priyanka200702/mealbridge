@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ngofood/widgets/sidebar_layout.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -9,238 +11,189 @@ class LeaderboardPage extends StatefulWidget {
 }
 
 class _LeaderboardPageState extends State<LeaderboardPage> {
-  List<DocumentSnapshot> oldDocs = [];
+  Widget _buildRankBadge(int index) {
+    if (index == 0) return const Text("🥇", style: TextStyle(fontSize: 24));
+    if (index == 1) return const Text("🥈", style: TextStyle(fontSize: 24));
+    if (index == 2) return const Text("🥉", style: TextStyle(fontSize: 24));
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        "${index + 1}",
+        style: GoogleFonts.inter(
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF43CEA2), Color(0xFF185A9D)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return SidebarLayout(
+      title: "Leaderboard",
+      activeMenu: "Leaderboard",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Top Contributors",
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Organizations making the biggest impact this month.",
+                  style: GoogleFonts.inter(
+                    color: Colors.grey.shade600,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // 🔙 BACK BUTTON + TITLE
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Container(
+          
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .where('role', isEqualTo: 'organization')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                var docs = snapshot.data?.docs ?? [];
+                
+                docs.sort((a, b) {
+                  var aData = a.data() as Map<String, dynamic>;
+                  var bData = b.data() as Map<String, dynamic>;
+                  int aDon = aData['totalDonations'] ?? 0;
+                  int bDon = bData['totalDonations'] ?? 0;
+                  return bDon.compareTo(aDon);
+                });
+
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No data available.",
+                      style: GoogleFonts.inter(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    var data = docs[index].data() as Map<String, dynamic>;
+                    int donations = data['totalDonations'] ?? 0;
+                    bool isTop3 = index < 3;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Text(
-                      "Leaderboard 🏆",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: isTop3 
+                            ? Border.all(color: const Color(0xFF16A34A).withOpacity(0.3), width: 1.5)
+                            : Border.all(color: Colors.transparent),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // 🔥 DATA STREAM
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .where('role', isEqualTo: 'organization')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      );
-                    }
-
-                    var docs = snapshot.data!.docs;
-
-                    // 🔥 SORT LOCALLY
-                    docs.sort((a, b) {
-                      var aData = a.data() as Map<String, dynamic>;
-                      var bData = b.data() as Map<String, dynamic>;
-
-                      int aDon = aData['totalDonations'] ?? 0;
-                      int bDon = bData['totalDonations'] ?? 0;
-
-                      return bDon.compareTo(aDon);
-                    });
-
-                    return AnimatedList(
-                      initialItemCount: docs.length,
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index, animation) {
-                        var data = docs[index].data() as Map<String, dynamic>;
-                        int donations = data['totalDonations'] ?? 0;
-
-                        return SizeTransition(
-                          sizeFactor: animation,
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            _buildRankBadge(index),
+                            const SizedBox(width: 16),
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isTop3 ? const Color(0xFFF0FDF4) : Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.business,
+                                color: isTop3 ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['name'] ?? "Organization",
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Joined recently",
+                                    style: GoogleFonts.inter(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                // 🥇 TOP 1 HERO CARD
-                                if (index == 0)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 20),
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFFFFD700),
-                                          Color(0xFFFFA500),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(24),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.orange.withOpacity(0.5),
-                                          blurRadius: 20,
-                                          offset: const Offset(0, 10),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        const Icon(
-                                          Icons.emoji_events,
-                                          size: 50,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          data['name'] ?? "Top Organization",
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        Text(
-                                          "$donations donations",
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                Text(
+                                  "$donations",
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: const Color(0xFF16A34A),
                                   ),
-
-                                // 💎 GLASS CARD
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 500),
-                                  curve: Curves.easeInOut,
-                                  margin: const EdgeInsets.only(bottom: 14),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      // 🔥 RANK
-                                      Container(
-                                        width: 45,
-                                        height: 45,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.green.withOpacity(
-                                                0.6,
-                                              ),
-                                              blurRadius: 10,
-                                            ),
-                                          ],
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "#${index + 1}",
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.green,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 16),
-
-                                      // 🔥 NAME
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              data['name'] ?? "Organization",
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            Text(
-                                              "$donations donations",
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      // 🏆 ICON
-                                      if (index < 3)
-                                        const Icon(
-                                          Icons.workspace_premium,
-                                          color: Colors.amber,
-                                        ),
-                                    ],
+                                ),
+                                Text(
+                                  "Meals",
+                                  style: GoogleFonts.inter(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
+                          ],
+                        ),
+                      ),
                     );
                   },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:ngofood/dashboard.dart';
 import 'package:ngofood/ngodashboard.dart';
 import 'package:ngofood/services/notification_service.dart';
+import 'package:ngofood/main.dart'; // To access MyApp.of(context)
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -41,7 +42,6 @@ class SignupPageState extends State<SignupPage> {
     setState(() => _isDetectingLocation = true);
 
     try {
-      // 1. Check & request permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -50,9 +50,7 @@ class SignupPageState extends State<SignupPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                "Location permission permanently denied. Enable it in Settings.",
-              ),
+              content: Text("Location permission permanently denied. Enable it in Settings."),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -60,16 +58,13 @@ class SignupPageState extends State<SignupPage> {
         return;
       }
 
-      // 2. Get GPS position
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
       );
 
-      // 3. Reverse geocode via Nominatim (reliable, no Play Services needed)
-      String address =
-          "${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}";
+      String address = "${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}";
       try {
         final uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
           'format': 'json',
@@ -83,15 +78,12 @@ class SignupPageState extends State<SignupPage> {
         );
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
-          // Use the full display_name which is already human-readable
           final displayName = data['display_name'] as String?;
           if (displayName != null && displayName.isNotEmpty) {
             address = displayName;
           }
         }
-      } catch (_) {
-        // Network unavailable — keep raw lat/lng as address
-      }
+      } catch (_) {}
 
       setState(() {
         _lat = position.latitude;
@@ -130,7 +122,6 @@ class SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // Require address for all users
     if (_addressString == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -160,7 +151,6 @@ class SignupPageState extends State<SignupPage> {
             password: passCtrl.text,
           );
 
-      // Build the Firestore document
       final Map<String, dynamic> userData = {
         'name': nameCtrl.text.trim(),
         'email': emailCtrl.text.trim(),
@@ -172,7 +162,6 @@ class SignupPageState extends State<SignupPage> {
         userData['totalDonations'] = 0;
       }
 
-      // Save location and address for all users
       if (_addressString != null) {
         userData['address'] = _addressString;
         userData['lat'] = _lat;
@@ -184,19 +173,18 @@ class SignupPageState extends State<SignupPage> {
           .doc(userCred.user!.uid)
           .set(userData);
 
-      // Update FCM Token for the new user
       await NotificationService().updateToken();
 
       if (mounted) {
         if (isOrg) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => Dashboard()),
+            MaterialPageRoute(builder: (_) => const Dashboard()),
           );
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => NGODashboard()),
+            MaterialPageRoute(builder: (_) => const NGODashboard()),
           );
         }
       }
@@ -228,6 +216,8 @@ class SignupPageState extends State<SignupPage> {
   // ────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -235,243 +225,256 @@ class SignupPageState extends State<SignupPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.green.shade800,
-              Colors.green.shade500,
-              Colors.green.shade200,
-            ],
+            colors: isDark
+                ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                : [Colors.green.shade800, Colors.green.shade500, Colors.green.shade200],
           ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                  ),
-                  const Text(
-                    "Create Account",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            // Form Card
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(50),
-                    topRight: Radius.circular(50),
-                  ),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30.0,
-                    vertical: 40,
-                  ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ── Role Selector ──
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
+                      const SizedBox(height: 40),
+                      // Header
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         child: Row(
                           children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => isOrg = true),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isOrg
-                                        ? Colors.green
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      "Organization",
-                                      style: TextStyle(
-                                        color: isOrg
-                                            ? Colors.white
-                                            : Colors.grey.shade600,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                             ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => isOrg = false),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: !isOrg
-                                        ? Colors.green
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      "NGO",
-                                      style: TextStyle(
-                                        color: !isOrg
-                                            ? Colors.white
-                                            : Colors.grey.shade600,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                            const Text(
+                              "Create Account",
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      // ── Name ──
-                      _buildTextField(
-                        controller: nameCtrl,
-                        label: isOrg ? "Organization Name" : "NGO Name",
-                        icon: Icons.business,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── Email ──
-                      _buildTextField(
-                        controller: emailCtrl,
-                        label: "Email Address",
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── Phone ──
-                      _buildTextField(
-                        controller: phoneCtrl,
-                        label: "Phone Number",
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── Password ──
-                      _buildTextField(
-                        controller: passCtrl,
-                        label: "Password",
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                        obscureText: _obscurePass,
-                        onSuffixTap: () =>
-                            setState(() => _obscurePass = !_obscurePass),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── Confirm Password ──
-                      _buildTextField(
-                        controller: confirmCtrl,
-                        label: "Confirm Password",
-                        icon: Icons.lock_reset,
-                        isPassword: true,
-                        obscureText: _obscureConfirm,
-                        onSuffixTap: () =>
-                            setState(() => _obscureConfirm = !_obscureConfirm),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── Location picker ──
-                      const SizedBox(height: 4),
-                      _buildLocationSection(),
-                      const SizedBox(height: 20),
-
-                      const SizedBox(height: 20),
-
-                      // ── Sign Up button ──
-                      _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : Container(
-                              height: 60,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.green.shade700,
-                                    Colors.green.shade400,
-                                  ],
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.green.shade200,
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: signup,
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: const Center(
-                                    child: Text(
-                                      "Sign Up",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("Already have an account?"),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      // Form Card
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(50),
+                              topRight: Radius.circular(50),
                             ),
                           ),
-                        ],
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30.0,
+                              vertical: 40,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // ── Role Selector ──
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => isOrg = true),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: isOrg ? Colors.green : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                "Organization",
+                                                style: TextStyle(
+                                                  color: isOrg ? Colors.white : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => isOrg = false),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            decoration: BoxDecoration(
+                                              color: !isOrg ? Colors.green : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                "NGO",
+                                                style: TextStyle(
+                                                  color: !isOrg ? Colors.white : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+
+                                // ── Name ──
+                                _buildTextField(
+                                  controller: nameCtrl,
+                                  label: isOrg ? "Organization Name" : "NGO Name",
+                                  icon: Icons.business,
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // ── Email ──
+                                _buildTextField(
+                                  controller: emailCtrl,
+                                  label: "Email Address",
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // ── Phone ──
+                                _buildTextField(
+                                  controller: phoneCtrl,
+                                  label: "Phone Number",
+                                  icon: Icons.phone_outlined,
+                                  keyboardType: TextInputType.phone,
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // ── Password ──
+                                _buildTextField(
+                                  controller: passCtrl,
+                                  label: "Password",
+                                  icon: Icons.lock_outline,
+                                  isPassword: true,
+                                  obscureText: _obscurePass,
+                                  onSuffixTap: () => setState(() => _obscurePass = !_obscurePass),
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // ── Confirm Password ──
+                                _buildTextField(
+                                  controller: confirmCtrl,
+                                  label: "Confirm Password",
+                                  icon: Icons.lock_reset,
+                                  isPassword: true,
+                                  obscureText: _obscureConfirm,
+                                  onSuffixTap: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                                  isDark: isDark,
+                                ),
+                                const SizedBox(height: 20),
+
+                                // ── Location picker ──
+                                const SizedBox(height: 4),
+                                _buildLocationSection(isDark),
+                                const SizedBox(height: 20),
+
+                                const SizedBox(height: 20),
+
+                                // ── Sign Up button ──
+                                _isLoading
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : Container(
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15),
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.green.shade700,
+                                              Colors.green.shade400,
+                                            ],
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.green.withOpacity(0.3),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: signup,
+                                            borderRadius: BorderRadius.circular(15),
+                                            child: const Center(
+                                              child: Text(
+                                                "Sign Up",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text("Already have an account?", style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.black87)),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text(
+                                        "Login",
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                top: 16,
+                right: 16,
+                child: IconButton(
+                  icon: Icon(
+                    isDark ? Icons.light_mode : Icons.dark_mode,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    MyApp.of(context).toggleTheme();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -480,7 +483,7 @@ class SignupPageState extends State<SignupPage> {
   // ────────────────────────────────────────────────
   // Location section widget
   // ────────────────────────────────────────────────
-  Widget _buildLocationSection() {
+  Widget _buildLocationSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -489,7 +492,7 @@ class SignupPageState extends State<SignupPage> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Colors.grey.shade700,
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
           ),
         ),
         const SizedBox(height: 8),
@@ -497,12 +500,12 @@ class SignupPageState extends State<SignupPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: _addressString != null
                   ? Colors.green.shade300
-                  : Colors.grey.shade200,
+                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
             ),
           ),
           child: Row(
@@ -523,9 +526,9 @@ class SignupPageState extends State<SignupPage> {
                         children: [
                           Text(
                             _addressString!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Colors.black87,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -598,14 +601,16 @@ class SignupPageState extends State<SignupPage> {
     bool obscureText = false,
     VoidCallback? onSuffixTap,
     TextInputType keyboardType = TextInputType.text,
+    required bool isDark,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.transparent),
+        boxShadow: isDark ? null : [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -615,9 +620,10 @@ class SignupPageState extends State<SignupPage> {
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey.shade600),
+          labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
           prefixIcon: Icon(icon, color: Colors.green.shade600),
           suffixIcon: isPassword
               ? GestureDetector(

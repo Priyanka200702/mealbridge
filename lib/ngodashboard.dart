@@ -9,6 +9,8 @@ import 'package:ngofood/widgets/notification_dialog.dart';
 import 'package:ngofood/services/notification_service.dart';
 import 'package:ngofood/org_profile_view.dart';
 import 'package:ngofood/widgets/countdown_timer.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ngofood/widgets/sidebar_layout.dart';
 
 class NGODashboard extends StatefulWidget {
   const NGODashboard({super.key});
@@ -26,7 +28,6 @@ class _NGODashboardState extends State<NGODashboard> {
   void initState() {
     super.initState();
     _initLocation();
-    // Clean up notifications older than 1 day
     NotificationService().cleanupOldNotifications();
   }
 
@@ -47,9 +48,7 @@ class _NGODashboardState extends State<NGODashboard> {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(
-          () => locationStatus = "Location permissions are permanently denied.",
-        );
+        setState(() => locationStatus = "Location permissions are permanently denied.");
         return;
       }
 
@@ -63,11 +62,9 @@ class _NGODashboardState extends State<NGODashboard> {
         setState(() {
           userLat = pos.latitude;
           userLng = pos.longitude;
-          locationStatus =
-              "Current Location: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}";
+          locationStatus = "Current Location: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}";
         });
 
-        // Save location to user profile for nearby notifications
         User? user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           await FirebaseFirestore.instance
@@ -88,33 +85,21 @@ class _NGODashboardState extends State<NGODashboard> {
 
   void _claimFood(BuildContext context, String id) async {
     try {
-      // 1. Get food details BEFORE updating status
-      var foodDoc = await FirebaseFirestore.instance
-          .collection('foods')
-          .doc(id)
-          .get();
+      var foodDoc = await FirebaseFirestore.instance.collection('foods').doc(id).get();
       var foodData = foodDoc.data() as Map<String, dynamic>;
       String? orgId = foodData['orgId'];
       String foodName = foodData['food'] ?? 'Food';
 
-      // 2. Get current NGO name
       User? user = FirebaseAuth.instance.currentUser;
       String ngoName = "An NGO";
       if (user != null) {
-        var userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+        var userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
         ngoName = userDoc.data()?['name'] ?? "An NGO";
       }
 
-      // 3. Delete the food document (Autodeletion on claim)
       await FirebaseFirestore.instance.collection('foods').doc(id).delete();
-
-      // 4. Clear notifications for this food across all NGOs
       await NotificationService().clearNotificationsForFood(id);
 
-      // 5. Notify the organization
       if (orgId != null) {
         await NotificationService().notifyOrganizationOnClaim(
           orgId: orgId,
@@ -165,167 +150,48 @@ class _NGODashboardState extends State<NGODashboard> {
     );
   }
 
+  Widget _buildStatCard(String title, String value, List<Color> gradient, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: gradient[1].withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Icon(icon, color: Colors.white.withOpacity(0.2), size: 48),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAF8),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.green.withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text(
-                "NGO Dashboard",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            actions: [
-              // NOTIFICATION BELL (Moved to the left of Logout)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(FirebaseAuth.instance.currentUser?.uid)
-                      .collection('notifications')
-                      .where('isRead', isEqualTo: false)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    int unreadCount = snapshot.data?.docs.length ?? 0;
-                    return Stack(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              showModalBottomSheet(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                isScrollControlled: true,
-                                builder: (_) => const NotificationDialog(),
-                              ).then((_) async {
-                                // Mark all as read when closed
-                                final userId =
-                                    FirebaseAuth.instance.currentUser?.uid;
-                                if (userId != null) {
-                                  var unreadDocs = await FirebaseFirestore
-                                      .instance
-                                      .collection('users')
-                                      .doc(userId)
-                                      .collection('notifications')
-                                      .where('isRead', isEqualTo: false)
-                                      .get();
-                                  for (var doc in unreadDocs.docs) {
-                                    doc.reference.update({'isRead': true});
-                                  }
-                                }
-                              });
-                            },
-                            icon: Icon(
-                              unreadCount > 0
-                                  ? Icons.notifications_active
-                                  : Icons.notifications_none,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        if (unreadCount > 0)
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                unreadCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              // LOGOUT BUTTON (Moved to far right)
-              Padding(
-                padding: const EdgeInsets.only(right: 16, left: 8, top: 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: () async {
-                      try {
-                        await FirebaseAuth.instance.signOut();
-                        if (context.mounted) {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                            (route) => false,
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error logging out: $e")),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(
-                      Icons.logout,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    tooltip: 'Logout',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: CustomScrollView(
+    return SidebarLayout(
+      title: "Dashboard",
+      activeMenu: "Dashboard",
+      child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -333,28 +199,67 @@ class _NGODashboardState extends State<NGODashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Explore Nearby Food",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  // STATISTIC CARDS
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 600) {
+                        return Column(
+                          children: [
+                            _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant),
+                            const SizedBox(height: 16),
+                            _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant)),
+                          const SizedBox(width: 24),
+                          Expanded(child: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining)),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // NEARBY FOOD LISTINGS HEADER
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Nearby Food Listings",
+                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Color(0xFF34D399), Color(0xFF10B981)]),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.route, color: Colors.white, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              "Optimize Route",
+                              style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
+
                   // MAP BOX
                   Container(
-                    height: 220,
+                    height: 260,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
+                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8)),
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -365,35 +270,22 @@ class _NGODashboardState extends State<NGODashboard> {
                               children: [
                                 const CircularProgressIndicator(),
                                 const SizedBox(height: 16),
-                                Text(
-                                  "Waiting for location...",
-                                  style: TextStyle(color: Colors.grey.shade600),
-                                ),
+                                Text("Waiting for location...", style: TextStyle(color: Colors.grey.shade600)),
                               ],
                             ),
                           )
                         : Stack(
                             children: [
                               StreamBuilder<QuerySnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collection('foods')
-                                    .where('status', isEqualTo: 'available')
-                                    .snapshots(),
+                                stream: FirebaseFirestore.instance.collection('foods').where('status', isEqualTo: 'available').snapshots(),
                                 builder: (context, snapshot) {
                                   Set<Marker> markers = {};
-
-                                  // Current User Marker (NGO)
                                   markers.add(
                                     Marker(
                                       markerId: const MarkerId("current_user"),
                                       position: LatLng(userLat!, userLng!),
-                                      infoWindow: const InfoWindow(
-                                        title: "My NGO",
-                                        snippet: "Current Location",
-                                      ),
-                                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                                        BitmapDescriptor.hueOrange,
-                                      ),
+                                      infoWindow: const InfoWindow(title: "My NGO", snippet: "Current Location"),
+                                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
                                     ),
                                   );
 
@@ -404,17 +296,9 @@ class _NGODashboardState extends State<NGODashboard> {
                                         markers.add(
                                           Marker(
                                             markerId: MarkerId(doc.id),
-                                            position: LatLng(
-                                              (data['lat'] as num).toDouble(),
-                                              (data['lng'] as num).toDouble(),
-                                            ),
-                                            infoWindow: InfoWindow(
-                                              title: data['orgName'] ?? 'Organization',
-                                              snippet: "Food: ${data['food'] ?? 'N/A'}",
-                                            ),
-                                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                                              BitmapDescriptor.hueRed,
-                                            ),
+                                            position: LatLng((data['lat'] as num).toDouble(), (data['lng'] as num).toDouble()),
+                                            infoWindow: InfoWindow(title: data['orgName'] ?? 'Organization', snippet: "Food: ${data['food'] ?? 'N/A'}"),
+                                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                                           ),
                                         );
                                       }
@@ -422,72 +306,23 @@ class _NGODashboardState extends State<NGODashboard> {
                                   }
 
                                   return GoogleMap(
-                                    initialCameraPosition: CameraPosition(
-                                      target: LatLng(userLat!, userLng!),
-                                      zoom: 14,
-                                    ),
+                                    initialCameraPosition: CameraPosition(target: LatLng(userLat!, userLng!), zoom: 14),
                                     markers: markers,
                                     myLocationEnabled: false,
                                     zoomControlsEnabled: false,
                                     onMapCreated: (GoogleMapController controller) {
-                                      // Smooth camera focus
-                                      controller.animateCamera(
-                                        CameraUpdate.newLatLngZoom(
-                                          LatLng(userLat!, userLng!),
-                                          14,
-                                        ),
-                                      );
+                                      controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(userLat!, userLng!), 14));
                                     },
                                   );
                                 },
-                              ),
-                              // Overlay label
-                              Positioned(
-                                top: 16,
-                                left: 16,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.volunteer_activism, color: Colors.red, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "Nearby Donations",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey.shade800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ),
                             ],
                           ),
                   ),
                   const SizedBox(height: 32),
-                  const Text(
-                    "Available for Claiming",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  Text(
+                    "Urgent Food Requests",
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                 ],
               ),
@@ -495,40 +330,23 @@ class _NGODashboardState extends State<NGODashboard> {
           ),
 
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('foods')
-                .orderBy('timestamp', descending: true)
-                .snapshots(),
+            stream: FirebaseFirestore.instance.collection('foods').orderBy('timestamp', descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
               }
 
               var docs = snapshot.data?.docs ?? [];
-
-              // Filter by availability AND 5km radius
               var availableDocs = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 if (data['status'] != 'available') return false;
-
-                // Distance filtering (5km radius)
-                if (userLat != null &&
-                    userLng != null &&
-                    data['lat'] != null &&
-                    data['lng'] != null) {
+                if (userLat != null && userLng != null && data['lat'] != null && data['lng'] != null) {
                   double itemLat = (data['lat'] as num).toDouble();
                   double itemLng = (data['lng'] as num).toDouble();
-                  double distance = Geolocator.distanceBetween(
-                    userLat!,
-                    userLng!,
-                    itemLat,
-                    itemLng,
-                  );
-                  return distance <= 5000; // 5km
+                  double distance = Geolocator.distanceBetween(userLat!, userLng!, itemLat, itemLng);
+                  return distance <= 5000;
                 }
-                return true; // Show all available food if NGO location is still loading
+                return true;
               }).toList();
 
               if (availableDocs.isEmpty) {
@@ -537,29 +355,19 @@ class _NGODashboardState extends State<NGODashboard> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.no_food_outlined,
-                          size: 60,
-                          color: Colors.grey.shade400,
-                        ),
+                        Icon(Icons.no_food_outlined, size: 60, color: Colors.grey.shade400),
                         const SizedBox(height: 16),
                         Text(
-                          userLat == null
-                              ? "Waiting for location..."
-                              : "No food available within 5km",
+                          userLat == null ? "Waiting for location..." : "No food available within 5km",
                           style: const TextStyle(color: Colors.grey),
                         ),
-                        if (userLat != null)
-                          TextButton(
-                            onPressed: () => getLocation(),
-                            child: const Text("Refresh Location"),
-                          ),
                       ],
                     ),
                   ),
                 );
               }
 
+              // Use LayoutBuilder for responsive grid vs list
               return SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverList(
@@ -567,133 +375,105 @@ class _NGODashboardState extends State<NGODashboard> {
                     var doc = availableDocs[index];
                     var data = doc.data() as Map<String, dynamic>;
                     var timestamp = data['timestamp'] as Timestamp?;
-                    String timeStr = timestamp != null
-                        ? timeago.format(timestamp.toDate())
-                        : 'Recently';
+                    String timeStr = timestamp != null ? timeago.format(timestamp.toDate()) : 'Recently';
 
-                    return GestureDetector(
-                      onTap: () {
-                        final orgId = data['orgId'] as String?;
-                        if (orgId != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => OrgProfileView(orgId: orgId),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Organisation info not available"),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 55,
-                                height: 55,
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Icon(
-                                  Icons.fastfood,
-                                  color: Colors.green.shade600,
-                                  size: 26,
+                    // Determine urgency randomly or based on expiry for UI demo
+                    bool isUrgent = index % 2 == 0; 
+                    
+                    double distanceKm = 0.0;
+                    if (userLat != null && userLng != null && data['lat'] != null && data['lng'] != null) {
+                      distanceKm = Geolocator.distanceBetween(
+                        userLat!, userLng!, 
+                        (data['lat'] as num).toDouble(), 
+                        (data['lng'] as num).toDouble()
+                      ) / 1000;
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                image: const DecorationImage(
+                                  image: NetworkImage('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&q=80'),
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      data['food'] ?? 'Food',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "Qty: ${data['quantity']}",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    Text(
-                                      timeStr,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade400,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    if (data['expiryTime'] != null) ...[
-                                      const SizedBox(height: 6),
-                                      CountdownTimer(
-                                        expiryTime:
-                                            (data['expiryTime'] as Timestamp)
-                                                .toDate(),
-                                        onExpired: () async {
-                                          await FirebaseFirestore.instance
-                                              .collection('foods')
-                                              .doc(doc.id)
-                                              .delete();
-                                          // Clear notifications for this food
-                                          await NotificationService()
-                                              .clearNotificationsForFood(
-                                                doc.id,
-                                              );
-                                        },
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['orgName'] ?? data['name'] ?? 'Restaurant',
+                                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "${distanceKm.toStringAsFixed(1)} km • $timeStr",
+                                        style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 12),
                                       ),
                                     ],
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    data['food'] ?? 'Food Package',
+                                    style: GoogleFonts.inter(color: Colors.black87, fontSize: 14),
+                                  ),
+                                ],
                               ),
-                              ElevatedButton(
-                                onPressed: () => _showClaimDialog(
-                                  context,
-                                  doc.id,
-                                  data['food'] ?? 'Food',
-                                  data['orgName'] ?? data['name'] ?? 'this organisation',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade600,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isUrgent ? const Color(0xFFEF4444) : const Color(0xFF22C55E),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  "CLAIM",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                                  child: Text(
+                                    isUrgent ? "URGENT" : "NORMAL",
+                                    style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(height: 12),
+                                InkWell(
+                                  onTap: () => _showClaimDialog(context, doc.id, data['food'] ?? 'Food', data['orgName'] ?? 'Organisation'),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF16A34A)]),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      "View Details",
+                                      style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     );
