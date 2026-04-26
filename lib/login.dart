@@ -11,10 +11,10 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends State<LoginScreen> {
   final _orgNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withValues(alpha: 0.1),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 spreadRadius: 5,
                               ),
@@ -282,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.green.withOpacity(0.3),
+                                              color: Colors.green.withValues(alpha: 0.3),
                                               blurRadius: 10,
                                               offset: const Offset(0, 5),
                                             ),

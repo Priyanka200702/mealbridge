@@ -410,7 +410,7 @@ class SignupPageState extends State<SignupPage> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.green.withOpacity(0.3),
+                                              color: Colors.green.withValues(alpha: 0.3),
                                               blurRadius: 10,
                                               offset: const Offset(0, 5),
                                             ),
@@ -610,7 +610,7 @@ class SignupPageState extends State<SignupPage> {
         border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.transparent),
         boxShadow: isDark ? null : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

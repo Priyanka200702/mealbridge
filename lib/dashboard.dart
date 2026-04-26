@@ -53,7 +53,7 @@ class _DashboardState extends State<Dashboard> {
         gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: gradient[1].withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: gradient[1].withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 5)),
         ],
       ),
       child: Stack(
@@ -75,7 +75,7 @@ class _DashboardState extends State<Dashboard> {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Icon(icon, color: Colors.white.withOpacity(0.2), size: 48),
+            child: Icon(icon, color: Colors.white.withValues(alpha: 0.2), size: 48),
           ),
         ],
       ),
@@ -94,7 +94,7 @@ class _DashboardState extends State<Dashboard> {
             borderRadius: BorderRadius.circular(30),
             gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF16A34A)]),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF16A34A).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+              BoxShadow(color: const Color(0xFF16A34A).withValues(alpha: 0.4), blurRadius: 15, offset: const Offset(0, 8)),
             ],
           ),
           child: FloatingActionButton.extended(
@@ -164,7 +164,7 @@ class _DashboardState extends State<Dashboard> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8)),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 8)),
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -287,7 +287,7 @@ class _DashboardState extends State<Dashboard> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
                           ],
                         ),
                         child: Padding(

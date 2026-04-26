@@ -111,11 +111,11 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: isTop3 
-                            ? Border.all(color: const Color(0xFF16A34A).withOpacity(0.3), width: 1.5)
+                            ? Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3), width: 1.5)
                             : Border.all(color: Colors.transparent),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
+                            color: Colors.black.withValues(alpha: 0.02),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),

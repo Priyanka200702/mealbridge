@@ -207,6 +207,10 @@ class NotificationService {
     required String ngoName,
     required String foodName,
   }) async {
+    if (orgId.isEmpty) {
+      debugPrint("notifyOrganizationOnClaim: orgId is empty, cannot send notification.");
+      return;
+    }
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -214,7 +218,7 @@ class NotificationService {
           .collection('notifications')
           .add({
             'title': 'Donation Claimed!',
-            'body': '$ngoName claimed for your donation ($foodName).',
+            'body': '$ngoName claimed your donation ($foodName).',
             'timestamp': FieldValue.serverTimestamp(),
             'isRead': false,
             'type': 'claim',

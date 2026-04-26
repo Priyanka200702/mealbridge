@@ -122,7 +122,7 @@ class _AddFoodState extends State<AddFood> {
       lastDate: DateTime(2100),
     );
 
-    if (pickedDate == null) return;
+    if (pickedDate == null || !mounted) return;
 
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -184,7 +184,7 @@ class _AddFoodState extends State<AddFood> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -217,7 +217,7 @@ class _AddFoodState extends State<AddFood> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             spreadRadius: 5,
                           ),
@@ -323,7 +323,7 @@ class _AddFoodState extends State<AddFood> {
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.green.withOpacity(0.3),
+                                          color: Colors.green.withValues(alpha: 0.3),
                                           blurRadius: 15,
                                           offset: const Offset(0, 8),
                                         ),

@@ -104,7 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: isDark ? null : [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 15,
                               offset: const Offset(0, 8),
                             ),
@@ -174,7 +174,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.green.withOpacity(0.3),
+                              color: Colors.green.withValues(alpha: 0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 8),
                             ),
@@ -286,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.lightGreen.withOpacity(0.3),
+                              color: Colors.lightGreen.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -297,15 +297,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: InkWell(
                             onTap: () async {
                               await FirebaseAuth.instance.signOut();
-                              if (mounted) {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const LoginScreen(),
-                                  ),
-                                  (route) => false,
-                                );
-                              }
+                              if (!context.mounted) return;
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginScreen(),
+                                ),
+                                (route) => false,
+                              );
                             },
                             borderRadius: BorderRadius.circular(15),
                             child: const Center(
@@ -401,7 +400,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: isDark ? null : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -467,7 +466,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: isDark ? null : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

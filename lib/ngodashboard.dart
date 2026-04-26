@@ -3,12 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:ngofood/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:ngofood/widgets/notification_dialog.dart';
 import 'package:ngofood/services/notification_service.dart';
-import 'package:ngofood/org_profile_view.dart';
-import 'package:ngofood/widgets/countdown_timer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ngofood/widgets/sidebar_layout.dart';
 
@@ -54,8 +50,10 @@ class _NGODashboardState extends State<NGODashboard> {
 
       setState(() => locationStatus = "Getting current position...");
       Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
 
       if (mounted) {
@@ -108,21 +106,19 @@ class _NGODashboardState extends State<NGODashboard> {
         );
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Food claimed successfully! 🎉"),
-            backgroundColor: Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Food claimed successfully! 🎉"),
+          backgroundColor: Color(0xFF2E7D32),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -157,7 +153,7 @@ class _NGODashboardState extends State<NGODashboard> {
         gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: gradient[1].withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: gradient[1].withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 5)),
         ],
       ),
       child: Stack(
@@ -179,7 +175,7 @@ class _NGODashboardState extends State<NGODashboard> {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Icon(icon, color: Colors.white.withOpacity(0.2), size: 48),
+            child: Icon(icon, color: Colors.white.withValues(alpha: 0.2), size: 48),
           ),
         ],
       ),
@@ -259,7 +255,7 @@ class _NGODashboardState extends State<NGODashboard> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 8)),
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 8)),
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -395,7 +391,7 @@ class _NGODashboardState extends State<NGODashboard> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
                         ],
                       ),
                       child: Padding(

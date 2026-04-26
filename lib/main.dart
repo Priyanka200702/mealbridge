@@ -18,14 +18,14 @@ void main() async {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
+  static MyAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<MyAppState>()!;
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MyApp> createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
 
   void toggleTheme() {
@@ -51,7 +51,7 @@ class _MyAppState extends State<MyApp> {
           seedColor: const Color(0xFF16A34A),
           primary: const Color(0xFF16A34A),
           secondary: const Color(0xFF22C55E),
-          background: const Color(0xFFF8FAFC),
+          surface: const Color(0xFFF8FAFC),
           brightness: Brightness.light,
         ),
         textTheme: GoogleFonts.interTextTheme(
@@ -67,7 +67,7 @@ class _MyAppState extends State<MyApp> {
           seedColor: const Color(0xFF16A34A),
           primary: const Color(0xFF22C55E),
           secondary: const Color(0xFF4ADE80),
-          background: const Color(0xFF0F172A),
+          // background is deprecated, surface is already defined below
           surface: const Color(0xFF1E293B),
           brightness: Brightness.dark,
         ),
