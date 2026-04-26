@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ngofood/widgets/sidebar_layout.dart';
+import 'package:ngofood/widgets/org_delivery_panel.dart';
 import 'package:ngofood/widgets/countdown_timer.dart';
 import 'package:ngofood/services/notification_service.dart';
 
@@ -133,7 +134,10 @@ class _DashboardState extends State<Dashboard> {
                                 children: [
                                   _buildStatCard("Total Donations", "$count", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.favorite),
                                   const SizedBox(height: 16),
-                                  _buildStatCard("Active Listings", "View Below", const [Color(0xFF60A5FA), Color(0xFF3B82F6)], Icons.list_alt),
+                                  OrgDeliveryPanel(
+                                    orgId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                    fallbackWidget: _buildStatCard("Active Listings", "View Below", const [Color(0xFF60A5FA), Color(0xFF3B82F6)], Icons.list_alt),
+                                  ),
                                 ],
                               );
                             }
@@ -141,7 +145,12 @@ class _DashboardState extends State<Dashboard> {
                               children: [
                                 Expanded(child: _buildStatCard("Total Donations", "$count", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.favorite)),
                                 const SizedBox(width: 24),
-                                Expanded(child: _buildStatCard("Active Listings", "View Below", const [Color(0xFF60A5FA), Color(0xFF3B82F6)], Icons.list_alt)),
+                                Expanded(
+                                  child: OrgDeliveryPanel(
+                                    orgId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                                    fallbackWidget: _buildStatCard("Active Listings", "View Below", const [Color(0xFF60A5FA), Color(0xFF3B82F6)], Icons.list_alt),
+                                  ),
+                                ),
                               ],
                             );
                           },

@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ngofood/widgets/sidebar_layout.dart';
 import 'package:intl/intl.dart';
 import 'package:ngofood/widgets/route_preview_modal.dart';
+import 'package:ngofood/widgets/ngo_delivery_panel.dart';
+import 'dart:math';
 
 class NGODashboard extends StatefulWidget {
   const NGODashboard({super.key});
@@ -97,8 +99,13 @@ class _NGODashboardState extends State<NGODashboard> {
         ngoName = userDoc.data()?['name'] ?? "An NGO";
       }
 
+      String otp = (Random().nextInt(900000) + 100000).toString();
+
       await FirebaseFirestore.instance.collection('foods').doc(id).update({
         'status': 'claimed',
+        'deliveryStatus': 'active',
+        'otp': otp,
+        'otpStatus': 'pending',
         'ngoId': user?.uid,
         'pickupTime': FieldValue.serverTimestamp(),
       });
@@ -216,7 +223,10 @@ class _NGODashboardState extends State<NGODashboard> {
                           children: [
                             _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant),
                             const SizedBox(height: 16),
-                            _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
+                            NgoDeliveryPanel(
+                              ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                              fallbackWidget: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
+                            ),
                           ],
                         );
                       }
@@ -224,7 +234,12 @@ class _NGODashboardState extends State<NGODashboard> {
                         children: [
                           Expanded(child: _buildStatCard("Meals Received", "256", const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant)),
                           const SizedBox(width: 24),
-                          Expanded(child: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining)),
+                          Expanded(
+                            child: NgoDeliveryPanel(
+                              ngoId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                              fallbackWidget: _buildStatCard("Deliveries Completed", "124", const [Color(0xFFFBBF24), Color(0xFFF97316)], Icons.delivery_dining),
+                            ),
+                          ),
                         ],
                       );
                     },
