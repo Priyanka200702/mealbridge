@@ -34,27 +34,29 @@ class _ReviewDialogState extends State<ReviewDialog> {
     try {
       final batch = FirebaseFirestore.instance.batch();
 
-      // 1. Create the review document in the target user's subcollection
-      DocumentReference reviewRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.targetId)
-          .collection('reviews')
-          .doc(widget.foodId);
-      
-      batch.set(reviewRef, {
-        'rating': _rating,
-        'comment': _commentController.text.trim(),
-        'reviewerId': widget.reviewerId,
-        'reviewerName': widget.reviewerName,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      if (widget.targetId.isNotEmpty) {
+        // 1. Create the review document in the target user's subcollection
+        DocumentReference reviewRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.targetId)
+            .collection('reviews')
+            .doc(widget.foodId);
+        
+        batch.set(reviewRef, {
+          'rating': _rating,
+          'comment': _commentController.text.trim(),
+          'reviewerId': widget.reviewerId,
+          'reviewerName': widget.reviewerName,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
 
-      // 2. Update the target user's aggregated ratings
-      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(widget.targetId);
-      batch.update(userRef, {
-        'ratingCount': FieldValue.increment(1),
-        'totalRating': FieldValue.increment(_rating),
-      });
+        // 2. Update the target user's aggregated ratings
+        DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(widget.targetId);
+        batch.update(userRef, {
+          'ratingCount': FieldValue.increment(1),
+          'totalRating': FieldValue.increment(_rating),
+        });
+      }
 
       // 3. Clear the pending flag on the donation history
       DocumentReference historyRef = FirebaseFirestore.instance.collection('donations_history').doc(widget.foodId);

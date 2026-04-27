@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:ngofood/services/notification_service.dart';
 
 class NgoDeliveryPanel extends StatefulWidget {
   final String ngoId;
@@ -24,11 +25,24 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
   String _locationStatus = "Pending Location Check";
   int _attempts = 0;
   bool _isSuccess = false;
+  String? _lastFoodId;
 
   @override
   void dispose() {
     _otpController.dispose();
     super.dispose();
+  }
+
+  void _resetLocalState(String newId) {
+    setState(() {
+      _isSuccess = false;
+      _isLocationVerified = false;
+      _isCheckingLocation = false;
+      _locationStatus = "Pending Location Check";
+      _attempts = 0;
+      _otpController.clear();
+      _lastFoodId = newId;
+    });
   }
 
   Future<void> _verifyLocation(double orgLat, double orgLng) async {
@@ -126,6 +140,70 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
     }
   }
 
+  void _cancelDelivery(BuildContext context, String foodId, String orgId, String foodName) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Cancel Pickup?"),
+        content: Text("Are you sure you want to cancel the pickup for $foodName? The item will become available for other NGOs."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Yes, Cancel"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final batch = FirebaseFirestore.instance.batch();
+        
+        // Revert to available
+        batch.update(FirebaseFirestore.instance.collection('foods').doc(foodId), {
+          'deliveryStatus': 'pending',
+          'status': 'available',
+          'ngoId': null,
+          'otp': null,
+          'scheduledPickupTime': null,
+        });
+        
+        batch.update(FirebaseFirestore.instance.collection('donations_history').doc(foodId), {
+          'deliveryStatus': 'pending',
+          'ngoId': null,
+          'ngoName': null,
+        });
+
+        await batch.commit();
+
+        // Notify Org
+        String ngoName = "An NGO";
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.ngoId).get();
+        if (userDoc.exists) ngoName = userDoc.data()?['name'] ?? ngoName;
+
+        await NotificationService().notifyOrgOnCancellation(
+          orgId: orgId,
+          ngoName: ngoName,
+          foodName: foodName,
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Pickup cancelled. Item is back to available."), backgroundColor: Colors.orange),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -137,14 +215,22 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return widget.fallbackWidget;
+          return _buildEmptyState();
         }
 
         var doc = snapshot.data!.docs.first;
         var data = doc.data() as Map<String, dynamic>;
 
         String foodId = doc.id;
+        if (_lastFoodId != foodId) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _resetLocalState(foodId);
+          });
+          return const SizedBox.shrink();
+        }
         String correctOtp = data['otp'] ?? '';
+        String foodName = data['food'] ?? 'Food Package';
+        String quantity = data['quantity']?.toString() ?? 'N/A';
         double orgLat = (data['lat'] as num).toDouble();
         double orgLng = (data['lng'] as num).toDouble();
 
@@ -176,12 +262,59 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Delivery Verification",
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Delivery Verification",
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        FutureBuilder<DocumentSnapshot?>(
+                          future: (data['orgId'] != null && data['orgId'].toString().isNotEmpty)
+                              ? FirebaseFirestore.instance.collection('users').doc(data['orgId']).get()
+                              : Future.value(null),
+                          builder: (context, orgSnapshot) {
+                            if (!orgSnapshot.hasData || !orgSnapshot.data!.exists) {
+                              return const SizedBox.shrink();
+                            }
+                            var orgData = orgSnapshot.data!.data() as Map<String, dynamic>;
+                            String orgName = orgData['name'] ?? 'Organisation';
+                            double rating = (orgData['rating'] ?? 0.0).toDouble();
+
+                            return Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    orgName,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Row(
+                                  children: List.generate(5, (index) {
+                                    return Icon(
+                                      index < rating.floor() ? Icons.star : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 14,
+                                    );
+                                  }),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -197,6 +330,30 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
               ),
               const SizedBox(height: 12),
               
+              // Food Details
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.restaurant, color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "$foodName (Qty: $quantity)",
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Step 1
               Row(
                 children: [
@@ -289,6 +446,22 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
                   ),
                 ],
               ),
+              // Cancellation Button
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  onTap: () => _cancelDelivery(context, foodId, data['orgId'] as String? ?? '', foodName),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
             ],
           ),
         );
@@ -296,42 +469,95 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
     );
   }
 
-  Widget _buildSuccessCard() {
+  Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.4),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
       ),
       child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 48),
-            const SizedBox(height: 12),
+            Icon(
+              Icons.assignment_turned_in_outlined,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
             Text(
-              "Delivery Completed\nSuccessfully",
-              textAlign: TextAlign.center,
+              "No Active Orders",
               style: GoogleFonts.inter(
-                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "When you claim a donation, the verification panel will appear here.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSuccessCard() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(seconds: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.scale(
+            scale: 0.9 + (0.1 * value),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Delivery Completed\nSuccessfully",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -41,9 +41,14 @@ class LoginScreenState extends State<LoginScreen> {
       UserCredential userCred = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
+      User? user = userCred.user;
+      if (user == null || user.uid.isEmpty) {
+        throw Exception("Login failed: User data is unavailable.");
+      }
+
       var userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(userCred.user!.uid)
+          .doc(user.uid)
           .get();
 
       if (userDoc.exists) {

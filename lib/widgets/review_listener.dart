@@ -67,8 +67,8 @@ class _ReviewListenerState extends State<ReviewListener> {
                       context: context,
                       barrierDismissible: false,
                       builder: (context) => ReviewDialog(
-                        targetId: widget.isNGO ? data['orgId'] : data['ngoId'],
-                        targetName: widget.isNGO ? (data['orgName'] ?? "Organisation") : (data['ngoName'] ?? "NGO"),
+                        targetId: widget.isNGO ? (data['orgId'] as String? ?? '') : (data['ngoId'] as String? ?? ''),
+                        targetName: widget.isNGO ? (data['orgName'] as String? ?? "Organisation") : (data['ngoName'] as String? ?? "NGO"),
                         foodId: doc.id,
                         isReviewingNgo: !widget.isNGO,
                         reviewerId: _currentUserId!,

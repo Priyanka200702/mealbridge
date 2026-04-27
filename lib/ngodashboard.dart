@@ -24,6 +24,7 @@ class _NGODashboardState extends State<NGODashboard> {
   double? userLat;
   double? userLng;
   String locationStatus = "Fetching location...";
+  bool _isClaiming = false;
 
   @override
   void initState() {
@@ -86,9 +87,16 @@ class _NGODashboardState extends State<NGODashboard> {
     }
   }
 
-  void _claimFood(BuildContext context, String id) async {
+  void _claimFood(BuildContext context, String id, DateTime scheduledTime) async {
+    if (_isClaiming) return;
+    setState(() => _isClaiming = true);
+
     try {
       var foodDoc = await FirebaseFirestore.instance.collection('foods').doc(id).get();
+      if (!foodDoc.exists || (foodDoc.data() as Map<String, dynamic>)['status'] != 'available') {
+        throw Exception("Food is no longer available.");
+      }
+
       var foodData = foodDoc.data() as Map<String, dynamic>;
       String? orgId = foodData['orgId'];
       String foodName = foodData['food'] ?? 'Food';
@@ -109,13 +117,14 @@ class _NGODashboardState extends State<NGODashboard> {
         'otpStatus': 'pending',
         'ngoId': user?.uid,
         'pickupTime': FieldValue.serverTimestamp(),
+        'scheduledPickupTime': Timestamp.fromDate(scheduledTime),
       });
 
       // Update history document as well
-      await FirebaseFirestore.instance.collection('donations_history').doc(id).update({
+      await FirebaseFirestore.instance.collection('donations_history').doc(id).set({
         'ngoId': user?.uid,
         'ngoName': ngoName,
-      });
+      }, SetOptions(merge: true));
 
       // Increment totalReceived for the NGO
       if (user != null) {
@@ -146,6 +155,8 @@ class _NGODashboardState extends State<NGODashboard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
       );
+    } finally {
+      if (mounted) setState(() => _isClaiming = false);
     }
   }
 
@@ -165,7 +176,7 @@ class _NGODashboardState extends State<NGODashboard> {
 
     showDialog(
       context: context,
-      builder: (context) => RoutePreviewModal(
+      builder: (dialogContext) => RoutePreviewModal(
         foodId: foodId,
         foodName: data['food'] ?? 'Food',
         quantity: data['quantity']?.toString() ?? 'N/A',
@@ -175,7 +186,7 @@ class _NGODashboardState extends State<NGODashboard> {
         restaurantLng: (data['lng'] as num).toDouble(),
         ngoLat: userLat!,
         ngoLng: userLng!,
-        onConfirm: (id) => _claimFood(context, id),
+        onConfirm: (id, scheduledTime) => _claimFood(context, id, scheduledTime),
       ),
     );
   }

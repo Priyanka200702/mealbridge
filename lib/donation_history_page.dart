@@ -204,17 +204,36 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 4),
-              Text(
-                "Quantity: ${data['quantity'] ?? 'N/A'}",
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Quantity: ${data['quantity'] ?? 'N/A'}",
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  if (data['deliveryStatus'] == 'cancelled')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        "Cancelled",
+                        style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
                 widget.isNGO 
                   ? "From: ${data['orgName'] ?? 'Unknown Org'}" 
-                  : "Claimed by: ${data['ngoName'] ?? 'Not yet claimed'}",
+                  : "Claimed by: ${data['ngoName'] ?? (data['deliveryStatus'] == 'cancelled' ? 'N/A' : 'Not yet claimed')}",
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                  color: data['deliveryStatus'] == 'cancelled' 
+                      ? Colors.red.withValues(alpha: 0.7)
+                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
                 ),

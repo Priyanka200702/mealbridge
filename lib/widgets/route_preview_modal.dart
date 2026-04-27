@@ -14,7 +14,7 @@ class RoutePreviewModal extends StatefulWidget {
   final double restaurantLng;
   final double ngoLat;
   final double ngoLng;
-  final Function(String) onConfirm;
+  final Function(String, DateTime) onConfirm;
 
   const RoutePreviewModal({
     super.key,
@@ -42,6 +42,23 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
   String _duration = "";
 
   late GoogleMapController _mapController;
+  DateTime? _scheduledTime;
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        final now = DateTime.now();
+        _scheduledTime = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+        if (_scheduledTime!.isBefore(now)) {
+          _scheduledTime = _scheduledTime!.add(const Duration(days: 1));
+        }
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -71,9 +88,10 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
   }
 
   Future<void> _fetchRoute() async {
-    const String apiKey = "AIzaSyDoMLexAAPdYLZkSzyubYGA4XC7dMgb7dI";
+    // Using OSRM (Open Source Routing Machine) which is free and requires no API key.
+    // Note: OSRM takes coordinates in (longitude, latitude) order.
     final String url =
-        "https://maps.googleapis.com/maps/api/directions/json?origin=${widget.ngoLat},${widget.ngoLng}&destination=${widget.restaurantLat},${widget.restaurantLng}&key=$apiKey";
+        "https://router.project-osrm.org/route/v1/driving/${widget.ngoLng},${widget.ngoLat};${widget.restaurantLng},${widget.restaurantLat}?overview=full&geometries=polyline";
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -81,17 +99,38 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        if ((data["routes"] as List).isNotEmpty) {
+        if (data["code"] == "Ok" && (data["routes"] as List).isNotEmpty) {
           final route = data["routes"][0];
-          final legs = route["legs"][0];
-          final polylineStr = route["overview_polyline"]["points"];
+          final polylineStr = route["geometry"];
+          
+          final double distanceMeters = route["distance"] is num ? (route["distance"] as num).toDouble() : 0.0;
+          final double durationSeconds = route["duration"] is num ? (route["duration"] as num).toDouble() : 0.0;
+
+          // Format distance
+          String distanceText = "";
+          if (distanceMeters > 1000) {
+            distanceText = "${(distanceMeters / 1000).toStringAsFixed(1)} km";
+          } else {
+            distanceText = "${distanceMeters.toStringAsFixed(0)} m";
+          }
+
+          // Format duration
+          String durationText = "";
+          if (durationSeconds > 3600) {
+            int hours = durationSeconds ~/ 3600;
+            int mins = ((durationSeconds % 3600) / 60).round();
+            durationText = "$hours hr $mins min";
+          } else {
+            int mins = (durationSeconds / 60).round();
+            durationText = "$mins min";
+          }
 
           final List<LatLng> points = _decodePolyline(polylineStr);
 
           if (mounted) {
             setState(() {
-              _distance = legs["distance"]["text"];
-              _duration = legs["duration"]["text"];
+              _distance = distanceText;
+              _duration = durationText;
               _polylines.add(
                 Polyline(
                   polylineId: const PolylineId("route"),
@@ -112,15 +151,25 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
               _distance = "N/A";
               _duration = "N/A";
             });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("No driving route found for this location.")),
+            );
           }
         }
+      } else {
+        throw Exception("Failed to load route");
       }
     } catch (e) {
       debugPrint("Error fetching directions: $e");
       if (mounted) {
         setState(() {
           _isLoadingRoute = false;
+          _distance = "N/A";
+          _duration = "N/A";
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Could not calculate route.")),
+        );
       }
     }
   }
@@ -207,10 +256,11 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 // Title
                 Text(
                   "Pickup Route Preview",
@@ -235,6 +285,7 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                     child: Stack(
                       children: [
                         GoogleMap(
+                          style: isDark ? _getDarkModeStyle() : null,
                           initialCameraPosition: CameraPosition(
                             target: LatLng(
                               (widget.ngoLat + widget.restaurantLat) / 2,
@@ -246,11 +297,6 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                           polylines: _polylines,
                           onMapCreated: (controller) {
                             _mapController = controller;
-                            if (isDark) {
-                              _mapController.setMapStyle(
-                                  '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},{"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c3f"}]},{"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#6b9a76"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},{"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#9ca5b3"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},{"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#1f2835"}]},{"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#f3d19c"}]},{"featureType":"transit","elementType":"geometry","stylers":[{"color":"#2f3948"}]},{"featureType":"transit.station","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#515c6d"}]},{"featureType":"water","elementType":"labels.text.stroke","stylers":[{"color":"#17263c"}]}]'
-                              );
-                            }
                           },
                           myLocationEnabled: false,
                           zoomControlsEnabled: false,
@@ -361,6 +407,49 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Schedule Time Section
+                InkWell(
+                  onTap: () => _selectTime(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.schedule, color: Color(0xFF16A34A), size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              _scheduledTime == null ? "Schedule Pickup Time (Required)" : "Scheduled for:",
+                              style: GoogleFonts.inter(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_scheduledTime != null)
+                          Text(
+                            TimeOfDay.fromDateTime(_scheduledTime!).format(context),
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF16A34A),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        else
+                          Icon(Icons.edit_calendar, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Buttons
@@ -388,11 +477,11 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _isLoadingRoute
+                        onPressed: _isLoadingRoute || _scheduledTime == null
                             ? null
                             : () {
                                 Navigator.pop(context);
-                                widget.onConfirm(widget.foodId);
+                                widget.onConfirm(widget.foodId, _scheduledTime!);
                               },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -415,10 +504,15 @@ class _RoutePreviewModalState extends State<RoutePreviewModal> {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  String _getDarkModeStyle() {
+    return '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#746855"}]},{"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},{"featureType":"administrative.locality","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c3f"}]},{"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#6b9a76"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#38414e"}]},{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},{"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#9ca5b3"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#746855"}]},{"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#1f2835"}]},{"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#f3d19c"}]},{"featureType":"transit","elementType":"geometry","stylers":[{"color":"#2f3948"}]},{"featureType":"transit.station","elementType":"labels.text.fill","stylers":[{"color":"#d59563"}]},{"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]},{"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#515c6d"}]},{"featureType":"water","elementType":"labels.text.stroke","stylers":[{"color":"#17263c"}]}]';
   }
 
   Widget _buildInfoItem(IconData icon, String text, bool isDark) {

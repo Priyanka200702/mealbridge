@@ -139,13 +139,6 @@ class NotificationService {
                     'foodLng': lng,
                     'expiryTime': expiryTime,
                   })
-                  .then((_) {})
-                  .catchError((e) {
-                    debugPrint(
-                      "Failed to write notification for ${doc.id}: $e",
-                    );
-                    return null;
-                  }),
             );
 
             // 2. Log push notification intent
@@ -226,6 +219,56 @@ class NotificationService {
       debugPrint("Organization $orgId notified of claim by $ngoName.");
     } catch (e) {
       debugPrint("Error notifying organization on claim: $e");
+    }
+  }
+
+  /// Notifies the NGO that the organization has cancelled the pickup.
+  Future<void> notifyNgoOnCancellation({
+    required String ngoId,
+    required String orgName,
+    required String foodName,
+  }) async {
+    if (ngoId.isEmpty) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ngoId)
+          .collection('notifications')
+          .add({
+            'title': '⚠️ Order Cancelled',
+            'body': 'URGENT: $orgName has cancelled the delivery for $foodName. Please do not proceed for pickup.',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+            'type': 'cancellation_urgent',
+          });
+      debugPrint("NGO $ngoId notified of cancellation by $orgName.");
+    } catch (e) {
+      debugPrint("Error notifying NGO on cancellation: $e");
+    }
+  }
+
+  /// Notifies the organization that the NGO has cancelled the pickup.
+  Future<void> notifyOrgOnCancellation({
+    required String orgId,
+    required String ngoName,
+    required String foodName,
+  }) async {
+    if (orgId.isEmpty) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(orgId)
+          .collection('notifications')
+          .add({
+            'title': '⚠️ Pickup Cancelled by NGO',
+            'body': '$ngoName has cancelled the pickup for $foodName. The item is now back to available.',
+            'timestamp': FieldValue.serverTimestamp(),
+            'isRead': false,
+            'type': 'ngo_cancellation',
+          });
+      debugPrint("Org $orgId notified of cancellation by $ngoName.");
+    } catch (e) {
+      debugPrint("Error notifying Org on cancellation: $e");
     }
   }
 

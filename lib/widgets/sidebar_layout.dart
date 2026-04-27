@@ -48,12 +48,18 @@ class _SidebarLayoutState extends State<SidebarLayout> {
           .doc(user.uid)
           .get();
       if (mounted) {
-        setState(() {
-          var data = doc.data();
-          orgName = data?['name'] ?? "User";
-          role = data?['role'];
-          profileEmoji = data?['profileEmoji'] ?? (role == 'ngo' ? '🤝' : '🏢');
-        });
+        var data = doc.data();
+        String newName = data?['name'] ?? "User";
+        String? newRole = data?['role'];
+        String newEmoji = data?['profileEmoji'] ?? (newRole == 'ngo' ? '🤝' : '🏢');
+        
+        if (orgName != newName || role != newRole || profileEmoji != newEmoji) {
+          setState(() {
+            orgName = newName;
+            role = newRole;
+            profileEmoji = newEmoji;
+          });
+        }
       }
     }
   }

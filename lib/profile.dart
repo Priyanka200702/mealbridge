@@ -47,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     int ratingCount = userData?['ratingCount'] ?? 0;
     double totalRating = (userData?['totalRating'] ?? 0).toDouble();
-    double averageRating = ratingCount > 0 ? (totalRating / ratingCount) : 0.0;
+    double averageRating = (ratingCount > 0 && totalRating > 0) ? (totalRating / ratingCount) : 0.0;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
