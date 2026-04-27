@@ -18,7 +18,10 @@ class ReviewDialog extends StatefulWidget {
     required this.isReviewingNgo,
     required this.reviewerId,
     required this.reviewerName,
+    required this.reviewerRole,
   });
+
+  final String reviewerRole;
 
   @override
   State<ReviewDialog> createState() => _ReviewDialogState();
@@ -47,6 +50,7 @@ class _ReviewDialogState extends State<ReviewDialog> {
           'comment': _commentController.text.trim(),
           'reviewerId': widget.reviewerId,
           'reviewerName': widget.reviewerName,
+          'reviewerRole': widget.reviewerRole,
           'timestamp': FieldValue.serverTimestamp(),
         });
 

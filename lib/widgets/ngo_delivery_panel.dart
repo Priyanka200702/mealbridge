@@ -284,7 +284,9 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
                             }
                             var orgData = orgSnapshot.data!.data() as Map<String, dynamic>;
                             String orgName = orgData['name'] ?? 'Organisation';
-                            double rating = (orgData['rating'] ?? 0.0).toDouble();
+                            int ratingCount = orgData['ratingCount'] ?? 0;
+                            double totalRating = (orgData['totalRating'] ?? 0).toDouble();
+                            double rating = ratingCount > 0 ? totalRating / ratingCount : 0.0;
 
                             return Row(
                               children: [

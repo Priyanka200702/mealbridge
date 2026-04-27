@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 /// A read-only view of an organisation's profile.
 /// Used by NGOs when they tap on a food donation card.
@@ -43,6 +44,10 @@ class OrgProfileView extends StatelessWidget {
           }
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          int ratingCount = data['ratingCount'] ?? 0;
+          double totalRating = (data['totalRating'] ?? 0).toDouble();
+          double averageRating = (ratingCount > 0) ? (totalRating / ratingCount) : 0.0;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -113,6 +118,30 @@ class OrgProfileView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.star, color: Colors.amber.shade500, size: 18),
+                          const SizedBox(width: 4),
+                          Text(
+                            ratingCount > 0 ? averageRating.toStringAsFixed(1) : "New",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "($ratingCount reviews)",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -150,6 +179,23 @@ class OrgProfileView extends StatelessWidget {
                   value: data['address'] ?? 'Not provided',
                   icon: Icons.location_on_outlined,
                 ),
+
+                const SizedBox(height: 32),
+                
+                // ── Reviews Section ──
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Recent Reviews",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildReviewsList(context),
               ],
             ),
           );
@@ -205,6 +251,106 @@ class OrgProfileView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsList(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(orgId)
+          .collection('reviews')
+          .snapshots(includeMetadataChanges: true),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+            ),
+            child: Center(
+              child: Text(
+                "No reviews yet.",
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final rating = (data['rating'] ?? 0).toInt();
+            final comment = data['comment'] ?? '';
+            final reviewerName = data['reviewerName'] ?? 'Anonymous';
+            final reviewerRole = data['reviewerRole']?.toString().toUpperCase() ?? 'USER';
+            final timestamp = data['timestamp'] as Timestamp?;
+            final dateStr = timestamp != null ? DateFormat('MMM dd, yyyy').format(timestamp.toDate()) : '';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        reviewerName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        size: 16,
+                        color: Colors.amber.shade500,
+                      );
+                    }),
+                  ),
+                  if (comment.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      comment,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

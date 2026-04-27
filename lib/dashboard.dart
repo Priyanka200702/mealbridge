@@ -386,6 +386,7 @@ class _DashboardState extends State<Dashboard> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SliverFillRemaining(
+                      hasScrollBody: false,
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
@@ -409,9 +410,11 @@ class _DashboardState extends State<Dashboard> {
 
                   if (availableDocs.isEmpty) {
                     return SliverFillRemaining(
+                      hasScrollBody: false,
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.inventory_2_outlined,
@@ -421,6 +424,7 @@ class _DashboardState extends State<Dashboard> {
                             const SizedBox(height: 16),
                             Text(
                               "You have no active listings.",
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 color: Theme.of(
                                   context,

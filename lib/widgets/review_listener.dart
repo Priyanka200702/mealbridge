@@ -73,6 +73,7 @@ class _ReviewListenerState extends State<ReviewListener> {
                         isReviewingNgo: !widget.isNGO,
                         reviewerId: _currentUserId!,
                         reviewerName: _currentUserName ?? "User",
+                        reviewerRole: widget.isNGO ? 'ngo' : 'organization',
                       ),
                     );
                   }

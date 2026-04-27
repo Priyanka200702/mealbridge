@@ -448,7 +448,10 @@ class _NGODashboardState extends State<NGODashboard> {
             stream: FirebaseFirestore.instance.collection('foods').orderBy('timestamp', descending: true).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
+                return const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
 
               var docs = snapshot.data?.docs ?? [];
@@ -466,14 +469,17 @@ class _NGODashboardState extends State<NGODashboard> {
 
               if (availableDocs.isEmpty) {
                 return SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.no_food_outlined, size: 60, color: Colors.grey.shade400),
                         const SizedBox(height: 16),
                         Text(
                           userLat == null ? "Waiting for location..." : "No food available within 5km",
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],

@@ -15,358 +15,389 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final User? user = FirebaseAuth.instance.currentUser;
-  Map<String, dynamic>? userData;
-  bool isLoading = true;
   bool isNotOrg = false;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUserData();
-  }
-
-  Future<void> fetchUserData() async {
-    if (user != null) {
-      var doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
-      if (mounted) {
-        setState(() {
-          userData = doc.data();
-          isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    bool isNGO = userData?['role']?.toString().toLowerCase() == 'ngo';
+    if (user == null) {
+      return const Scaffold(body: Center(child: Text("Please log in")));
+    }
 
-    int ratingCount = userData?['ratingCount'] ?? 0;
-    double totalRating = (userData?['totalRating'] ?? 0).toDouble();
-    double averageRating = (ratingCount > 0 && totalRating > 0) ? (totalRating / ratingCount) : 0.0;
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(isNGO ? "NGO Profile" : "Organisation Profile"),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () async {
-              if (userData != null) {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditProfilePage(userData: userData!),
-                  ),
-                );
-                if (result == true) {
-                  fetchUserData();
-                }
-              }
-            },
+        final userData = snapshot.data?.data() as Map<String, dynamic>?;
+        bool isNGO = userData?['role']?.toString().toLowerCase() == 'ngo';
+
+        int ratingCount = userData?['ratingCount'] ?? 0;
+        double totalRating = (userData?['totalRating'] ?? 0).toDouble();
+        double averageRating = (ratingCount > 0)
+            ? (totalRating / ratingCount)
+            : 0.0;
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            title: Text(isNGO ? "NGO Profile" : "Organisation Profile"),
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () async {
+                  if (userData != null) {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditProfilePage(userData: userData),
+                      ),
+                    );
+                    // No need to call fetchUserData() because we are using a StreamBuilder
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(MediaQuery.of(context).size.width > 400 ? 24.0 : 16.0),
-                  child: Column(
-                    children: [
-                      // Profile Header Card
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : Colors.green.shade50,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isDark ? Colors.green.shade800 : Colors.green.shade100,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  userData?['profileEmoji'] ?? (isNGO ? '🤝' : '🏢'),
-                                  style: const TextStyle(fontSize: 40),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userData?['name'] ?? 'User Name',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.onSurface,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    (userData?['role'] ?? 'User')
-                                        .toString()
-                                        .toUpperCase(),
-                                    style: TextStyle(
-                                      color: Colors.green.shade500,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.star, color: Colors.amber.shade500, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        ratingCount > 0 ? averageRating.toStringAsFixed(1) : "New",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).colorScheme.onSurface,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "($ratingCount reviews)",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Stats Section
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.green.shade700, Colors.green.shade500],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.width > 400 ? 24.0 : 16.0,
+                ),
+                child: Column(
+                  children: [
+                    // Profile Header Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).shadowColor.withValues(alpha: 0.05),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem(
-                              isNGO ? "Total Received" : "Total Donations",
-                              (userData?[isNGO ? 'totalReceived' : 'totalDonations'] ?? 0).toString(),
-                              Icons.volunteer_activism,
-                            ),
-                            Container(height: 40, width: 1, color: Colors.white24),
-                            _buildStatItem(
-                              isNGO ? "Deliveries" : "Status",
-                              isNGO ? (userData?['totalDeliveries'] ?? 0).toString() : "Active",
-                              isNGO ? Icons.delivery_dining : Icons.verified_user_outlined,
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 32),
-
-                      // Recent Donations Preview
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Row(
                         children: [
-                          Flexible(
-                            child: Text(
-                              isNGO ? "Recent Claims" : "Recent Donations",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF0F172A)
+                                  : Colors.green.shade50,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.green.shade800
+                                    : Colors.green.shade100,
+                                width: 2,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            ),
+                            child: Center(
+                              child: Text(
+                                userData?['profileEmoji'] ??
+                                    (isNGO ? '🤝' : '🏢'),
+                                style: const TextStyle(fontSize: 40),
+                              ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => DonationHistoryPage(isNGO: isNGO),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userData?['name'] ?? 'User Name',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              );
-                            },
-                            child: Text(
-                              "View All",
-                              style: TextStyle(color: Colors.green.shade500),
+                                const SizedBox(height: 4),
+                                Text(
+                                  (userData?['role'] ?? 'User')
+                                      .toString()
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.green.shade500,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: Colors.amber.shade500,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      ratingCount > 0
+                                          ? averageRating.toStringAsFixed(1)
+                                          : "New",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "($ratingCount reviews)",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildRecentDonationsPreview(isDark, isNGO),
-                      const SizedBox(height: 32),
+                    ),
+                    const SizedBox(height: 24),
 
-                      // Details Section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          isNGO ? "NGO Details" : "Organisation Details",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                    // Stats Section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.green.shade700,
+                            Colors.green.shade500,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildDetailTile(
-                        label: "Name",
-                        value: userData?['name'] ?? 'Not provided',
-                        icon: Icons.person_outline,
-                        isDark: isDark,
-                      ),
-                      _buildDetailTile(
-                        label: "Email",
-                        value: userData?['email'] ?? 'Not provided',
-                        icon: Icons.email_outlined,
-                        isDark: isDark,
-                      ),
-                      _buildDetailTile(
-                        label: "Phone",
-                        value: userData?['phone'] ?? 'Not provided',
-                        icon: Icons.phone_outlined,
-                        isDark: isDark,
-                      ),
-                      _buildDetailTile(
-                        label: "Address",
-                        value: userData?['address'] ?? 'Not provided',
-                        icon: Icons.location_on_outlined,
-                        isDark: isDark,
-                      ),
-
-                      const SizedBox(height: 32),
-                      
-                      // Reviews Section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Recent Reviews",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withValues(alpha: 0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildReviewsList(isDark),
-
-                      const SizedBox(height: 48),
-
-                      // Logout Button
-                      Container(
-                        width: double.infinity,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.lightGreen.shade700,
-                              Colors.lightGreen.shade400,
-                            ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(
+                            isNGO ? "Total Received" : "Total Donations",
+                            (userData?[isNGO
+                                        ? 'totalReceived'
+                                        : 'totalDonations'] ??
+                                    0)
+                                .toString(),
+                            Icons.volunteer_activism,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.lightGreen.withValues(alpha: 0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
+                          Container(
+                            height: 40,
+                            width: 1,
+                            color: Colors.white24,
+                          ),
+                          _buildStatItem(
+                            isNGO ? "Deliveries" : "Status",
+                            isNGO
+                                ? (userData?['totalDeliveries'] ?? 0).toString()
+                                : "Active",
+                            isNGO
+                                ? Icons.delivery_dining
+                                : Icons.verified_user_outlined,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Recent Donations Preview
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            isNGO ? "Recent Claims" : "Recent Donations",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DonationHistoryPage(isNGO: isNGO),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            "View All",
+                            style: TextStyle(color: Colors.green.shade500),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRecentDonationsPreview(isDark, isNGO),
+                    const SizedBox(height: 32),
+
+                    // Details Section
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        isNGO ? "NGO Details" : "Organisation Details",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildDetailTile(
+                      label: "Name",
+                      value: userData?['name'] ?? 'Not provided',
+                      icon: Icons.person_outline,
+                      isDark: isDark,
+                    ),
+                    _buildDetailTile(
+                      label: "Email",
+                      value: userData?['email'] ?? 'Not provided',
+                      icon: Icons.email_outlined,
+                      isDark: isDark,
+                    ),
+                    _buildDetailTile(
+                      label: "Phone",
+                      value: userData?['phone'] ?? 'Not provided',
+                      icon: Icons.phone_outlined,
+                      isDark: isDark,
+                    ),
+                    _buildDetailTile(
+                      label: "Address",
+                      value: userData?['address'] ?? 'Not provided',
+                      icon: Icons.location_on_outlined,
+                      isDark: isDark,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Reviews Section
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Recent Reviews",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildReviewsList(isDark),
+
+                    const SizedBox(height: 48),
+
+                    // Logout Button
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.lightGreen.shade700,
+                            Colors.lightGreen.shade400,
                           ],
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () async {
-                              await FirebaseAuth.instance.signOut();
-                              if (!context.mounted) return;
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LoginScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(15),
-                            child: const Center(
-                              child: Text(
-                                "LOG OUT",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.lightGreen.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            await FirebaseAuth.instance.signOut();
+                            if (!context.mounted) return;
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LoginScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(15),
+                          child: const Center(
+                            child: Text(
+                              "LOG OUT",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
             ),
+          ),
+        );
+      },
     );
   }
 
@@ -383,7 +414,10 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
       ],
     );
   }
@@ -401,12 +435,18 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.05),
+              ),
             ),
             child: Center(
               child: Text(
                 "No recent donations found",
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           );
@@ -414,14 +454,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
         var docs = snapshot.data!.docs.toList();
         docs.sort((a, b) {
-          var t1 = (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
-          var t2 = (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+          var t1 =
+              (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+          var t2 =
+              (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
           if (t1 == null && t2 == null) return 0;
           if (t1 == null) return 1;
           if (t2 == null) return -1;
           return t2.compareTo(t1);
         });
-        
+
         var recentDocs = docs.take(2).toList();
 
         return Column(
@@ -440,7 +482,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -451,7 +495,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : Colors.green.shade50,
+                      color: isDark
+                          ? const Color(0xFF0F172A)
+                          : Colors.green.shade50,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
@@ -467,16 +513,18 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Text(
                           data['food'] ?? 'Food',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                         Text(
                           "${data['quantity'] ?? ''}",
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -485,7 +533,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Text(
                     dateStr,
                     style: TextStyle(
-                      fontSize: 12, 
+                      fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -529,7 +577,10 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -556,9 +607,7 @@ class _ProfilePageState extends State<ProfilePage> {
           .collection('users')
           .doc(user!.uid)
           .collection('reviews')
-          .orderBy('timestamp', descending: true)
-          .limit(5)
-          .snapshots(),
+          .snapshots(includeMetadataChanges: true),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Container(
@@ -566,12 +615,18 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.05),
+              ),
             ),
             child: Center(
               child: Text(
                 "No reviews yet.",
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           );
@@ -580,11 +635,15 @@ class _ProfilePageState extends State<ProfilePage> {
         return Column(
           children: snapshot.data!.docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final rating = data['rating'] ?? 5;
+            final rating = (data['rating'] ?? 0).toInt();
             final comment = data['comment'] ?? '';
             final reviewerName = data['reviewerName'] ?? 'Anonymous';
+            final reviewerRole =
+                data['reviewerRole']?.toString().toUpperCase() ?? 'USER';
             final timestamp = data['timestamp'] as Timestamp?;
-            final dateStr = timestamp != null ? DateFormat('MMM dd, yyyy').format(timestamp.toDate()) : '';
+            final dateStr = timestamp != null
+                ? DateFormat('MMM dd, yyyy').format(timestamp.toDate())
+                : '';
 
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -594,7 +653,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -638,7 +699,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       comment,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
