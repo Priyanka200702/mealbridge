@@ -272,8 +272,8 @@ class SignupPageState extends State<SignupPage> {
                             ),
                           ),
                           child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30.0,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: MediaQuery.of(context).size.width > 400 ? 30.0 : 20.0,
                               vertical: 40,
                             ),
                             child: Column(

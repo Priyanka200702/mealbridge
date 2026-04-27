@@ -378,16 +378,16 @@ class _SidebarLayoutState extends State<SidebarLayout> {
                   ),
                 ),
           title: Text(
-            "${role == 'organization'
-                ? 'Organisation Dashboard'
-                : role == 'ngo'
-                ? 'NGO Dashboard'
-                : 'Dashboard'} • Welcome, $orgName!",
+            isDesktop
+                ? "${role == 'organization' ? 'Organisation Dashboard' : role == 'ngo' ? 'NGO Dashboard' : 'Dashboard'} • Welcome, $orgName!"
+                : "Welcome, $orgName!",
             style: GoogleFonts.inter(
               color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 22,
+              fontSize: isDesktop ? 22 : 18,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           centerTitle: false,
           actions: [

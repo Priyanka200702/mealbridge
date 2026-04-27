@@ -249,7 +249,7 @@ class _AddFoodState extends State<AddFood> {
                         ],
                       ),
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(30.0),
+                        padding: EdgeInsets.all(MediaQuery.of(context).size.width > 400 ? 30.0 : 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [

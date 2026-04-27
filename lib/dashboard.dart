@@ -55,6 +55,7 @@ class _DashboardState extends State<Dashboard> {
     IconData icon,
   ) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -178,6 +179,7 @@ class _DashboardState extends State<Dashboard> {
                             builder: (context, constraints) {
                               if (constraints.maxWidth < 600) {
                                 return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     _buildStatCard(
                                       "Total Donations",
@@ -262,7 +264,8 @@ class _DashboardState extends State<Dashboard> {
 
                       // MAP BOX
                       Container(
-                        height: 260,
+                        height: MediaQuery.of(context).size.height * 0.35,
+                        constraints: const BoxConstraints(minHeight: 200, maxHeight: 350),
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
@@ -494,42 +497,50 @@ class _DashboardState extends State<Dashboard> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Row(
+                                      Wrap(
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 4,
                                         children: [
-                                          Icon(
-                                            Icons.inventory_2_outlined,
-                                            size: 14,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.inventory_2_outlined,
+                                                size: 14,
+                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(
+                                                  data['quantity'] ?? 'N/A',
+                                                  style: GoogleFonts.inter(
+                                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                    fontSize: 13,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            data['quantity'] ?? 'N/A',
-                                            style: GoogleFonts.inter(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.onSurfaceVariant,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Icon(
-                                            Icons.access_time,
-                                            size: 14,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            timeStr,
-                                            style: GoogleFonts.inter(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.onSurfaceVariant,
-                                              fontSize: 13,
-                                            ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.access_time,
+                                                size: 14,
+                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                timeStr,
+                                                style: GoogleFonts.inter(
+                                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

@@ -122,10 +122,10 @@ class _OnboardingPageContentState extends State<OnboardingPage>
                     opacity: _fadeAnimation,
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           "MealBridge",
                           style: TextStyle(
-                            fontSize: 48,
+                            fontSize: (MediaQuery.of(context).size.width * 0.12).clamp(32.0, 48.0),
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             letterSpacing: 1.5,

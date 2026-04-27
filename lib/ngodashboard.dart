@@ -193,6 +193,7 @@ class _NGODashboardState extends State<NGODashboard> {
 
   Widget _buildStatCard(String title, String value, List<Color> gradient, IconData icon) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
@@ -291,6 +292,7 @@ class _NGODashboardState extends State<NGODashboard> {
                         builder: (context, constraints) {
                           if (constraints.maxWidth < 600) {
                             return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _buildStatCard("Meals Received", mealsCount, const [Color(0xFF34D399), Color(0xFF10B981)], Icons.restaurant),
                                 const SizedBox(height: 16),
@@ -324,12 +326,14 @@ class _NGODashboardState extends State<NGODashboard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "Nearby Food Listings",
-                        style: GoogleFonts.inter(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold, 
-                          color: Theme.of(context).colorScheme.onSurface,
+                      Expanded(
+                        child: Text(
+                          "Nearby Food Listings",
+                          style: GoogleFonts.inter(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold, 
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                       Container(
@@ -355,7 +359,8 @@ class _NGODashboardState extends State<NGODashboard> {
 
                   // MAP BOX
                   Container(
-                    height: 260,
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    constraints: const BoxConstraints(minHeight: 200, maxHeight: 350),
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
@@ -582,19 +587,26 @@ class _NGODashboardState extends State<NGODashboard> {
                                 ),
                                 const SizedBox(height: 12),
                                 InkWell(
-                                  onTap: () => _showRoutePreviewModal(context, doc.id, data),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF16A34A)]),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      "View Details",
-                                      style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    onTap: () => _showRoutePreviewModal(context, doc.id, data),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: MediaQuery.of(context).size.width > 360 ? 16 : 8,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF16A34A)]),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        "View Details",
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: MediaQuery.of(context).size.width > 360 ? 12 : 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                           ],
