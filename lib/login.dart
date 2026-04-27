@@ -121,6 +121,38 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter your email first"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password reset link sent to your email 📩"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? "Error sending reset email"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -133,8 +165,15 @@ class LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [Theme.of(context).colorScheme.surface, Theme.of(context).scaffoldBackgroundColor]
-                : [Colors.green.shade800, Colors.green.shade500, Colors.green.shade200],
+                ? [
+                    Theme.of(context).colorScheme.surface,
+                    Theme.of(context).scaffoldBackgroundColor,
+                  ]
+                : [
+                    Colors.green.shade800,
+                    Colors.green.shade500,
+                    Colors.green.shade200,
+                  ],
           ),
         ),
         child: SafeArea(
@@ -204,14 +243,20 @@ class LoginScreenState extends State<LoginScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context).shadowColor.withValues(alpha: 0.1),
+                                color: Theme.of(
+                                  context,
+                                ).shadowColor.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 spreadRadius: 5,
                               ),
                             ],
                           ),
                           child: SingleChildScrollView(
-                            padding: EdgeInsets.all(MediaQuery.of(context).size.width > 400 ? 30.0 : 20.0),
+                            padding: EdgeInsets.all(
+                              MediaQuery.of(context).size.width > 400
+                                  ? 30.0
+                                  : 20.0,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -220,14 +265,21 @@ class LoginScreenState extends State<LoginScreen> {
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
                                   "Login to your account to continue",
-                                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                    fontSize: 14,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 40),
@@ -256,7 +308,10 @@ class LoginScreenState extends State<LoginScreen> {
                                   isPassword: true,
                                   obscureText: _obscurePassword,
                                   onSuffixTap: () {
-                                    setState(() => _obscurePassword = !_obscurePassword);
+                                    setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    );
                                   },
                                   isDark: isDark,
                                 ),
@@ -264,7 +319,9 @@ class LoginScreenState extends State<LoginScreen> {
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      _resetPassword();
+                                    },
                                     child: const Text(
                                       "Forgot Password?",
                                       style: TextStyle(color: Colors.green),
@@ -274,11 +331,15 @@ class LoginScreenState extends State<LoginScreen> {
                                 const SizedBox(height: 30),
                                 // Login Button
                                 _isLoading
-                                    ? const Center(child: CircularProgressIndicator())
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
                                     : Container(
                                         height: 60,
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(15),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
                                           gradient: LinearGradient(
                                             colors: [
                                               Colors.green.shade700,
@@ -287,7 +348,9 @@ class LoginScreenState extends State<LoginScreen> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.green.withValues(alpha: 0.3),
+                                              color: Colors.green.withValues(
+                                                alpha: 0.3,
+                                              ),
                                               blurRadius: 10,
                                               offset: const Offset(0, 5),
                                             ),
@@ -297,7 +360,9 @@ class LoginScreenState extends State<LoginScreen> {
                                           color: Colors.transparent,
                                           child: InkWell(
                                             onTap: _login,
-                                            borderRadius: BorderRadius.circular(15),
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
                                             child: const Center(
                                               child: Text(
                                                 "Login",
@@ -316,12 +381,21 @@ class LoginScreenState extends State<LoginScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("Don't have an account?", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                    Text(
+                                      "Don't have an account?",
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
                                     TextButton(
                                       onPressed: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (_) => const SignupPage()),
+                                          MaterialPageRoute(
+                                            builder: (_) => const SignupPage(),
+                                          ),
                                         );
                                       },
                                       child: const Text(
@@ -377,7 +451,9 @@ class LoginScreenState extends State<LoginScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
       ),
       child: TextField(
         controller: controller,
@@ -386,7 +462,9 @@ class LoginScreenState extends State<LoginScreen> {
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          labelStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           prefixIcon: Icon(icon, color: Colors.green.shade600),
           suffixIcon: isPassword
               ? GestureDetector(
