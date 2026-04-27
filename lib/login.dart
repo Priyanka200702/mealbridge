@@ -140,7 +140,7 @@ class LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Password reset link sent to your email 📩"),
-          backgroundColor: Colors.green,
+          backgroundColor: Color.fromARGB(255, 2, 102, 2),
         ),
       );
     } on FirebaseAuthException catch (e) {
