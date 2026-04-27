@@ -231,8 +231,8 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
         String correctOtp = data['otp'] ?? '';
         String foodName = data['food'] ?? 'Food Package';
         String quantity = data['quantity']?.toString() ?? 'N/A';
-        double orgLat = (data['lat'] as num).toDouble();
-        double orgLng = (data['lng'] as num).toDouble();
+        double orgLat = (data['lat'] as num?)?.toDouble() ?? 0.0;
+        double orgLng = (data['lng'] as num?)?.toDouble() ?? 0.0;
 
         if (_isSuccess) {
           return _buildSuccessCard();
