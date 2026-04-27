@@ -60,6 +60,8 @@ class _ReviewDialogState extends State<ReviewDialog> {
           'ratingCount': FieldValue.increment(1),
           'totalRating': FieldValue.increment(_rating),
         });
+      } else {
+        throw Exception("Target ID is missing. Cannot submit review for this older donation.");
       }
 
       // 3. Clear the pending flag on the donation history

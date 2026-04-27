@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: () async {
                   if (userData != null) {
-                    final result = await Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => EditProfilePage(userData: userData),
@@ -429,6 +429,9 @@ class _ProfilePageState extends State<ProfilePage> {
           .where(isNGO ? 'ngoId' : 'orgId', isEqualTo: user?.uid)
           .snapshots(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(child: Text("Error loading data"));
+        }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
@@ -609,6 +612,9 @@ class _ProfilePageState extends State<ProfilePage> {
           .collection('reviews')
           .snapshots(includeMetadataChanges: true),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error loading reviews: ${snapshot.error}"));
+        }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
@@ -667,12 +673,26 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        reviewerName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            reviewerName,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            reviewerRole,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.green.shade600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
                         dateStr,

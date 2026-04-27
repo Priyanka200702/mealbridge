@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:ngofood/org_profile_view.dart';
 
 class DonationHistoryPage extends StatefulWidget {
   final bool isNGO;
@@ -183,6 +184,16 @@ class _DonationHistoryPageState extends State<DonationHistoryPage> {
           ],
         ),
         child: ListTile(
+          onTap: () {
+            if (widget.isNGO && data['orgId'] != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrgProfileView(orgId: data['orgId']),
+                ),
+              );
+            }
+          },
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           leading: Container(
             padding: const EdgeInsets.all(10),

@@ -34,6 +34,18 @@ class _AddFoodState extends State<AddFood> {
   }
 
   void _addFood() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You must be logged in to donate food"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_foodController.text.isEmpty ||
         _quantityController.text.isEmpty ||
         _expiryTime == null) {

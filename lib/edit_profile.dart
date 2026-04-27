@@ -80,63 +80,69 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _showEmojiPicker() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Pick an Emoji",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 24),
-              GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                ),
-                itemCount: _popularEmojis.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedEmoji = _popularEmojis[index]);
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _selectedEmoji == _popularEmojis[index]
-                            ? Colors.green.withValues(alpha: 0.1)
-                            : Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: _selectedEmoji == _popularEmojis[index]
-                              ? Colors.green
-                              : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _popularEmojis[index],
-                        style: const TextStyle(fontSize: 30),
-                      ),
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Pick an Emoji",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 24),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
+                    itemCount: _popularEmojis.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedEmoji = _popularEmojis[index]);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _selectedEmoji == _popularEmojis[index]
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: _selectedEmoji == _popularEmojis[index]
+                                  ? Colors.green
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _popularEmojis[index],
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         );
       },

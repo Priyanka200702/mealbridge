@@ -60,10 +60,10 @@ class NotificationDialog extends StatelessWidget {
               var activeNotifications = docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 
-                // Allow "claim" type notifications even without foodId
-                if (data['type'] == 'claim') return true;
+                // Allow typed notifications (claim, cancellation, etc.)
+                if (data.containsKey('type') && data['type'] != null) return true;
 
-                // For other notifications, require foodId and check expiry
+                // For other notifications (like new food), require foodId and check expiry
                 if (!data.containsKey('foodId') || data['foodId'] == null) {
                   return false;
                 }
@@ -79,9 +79,9 @@ class NotificationDialog extends StatelessWidget {
               if (activeNotifications.isEmpty) {
                 return Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
+                    padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Text(
-                      "no new notification",
+                      "No new notifications",
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -96,21 +96,25 @@ class NotificationDialog extends StatelessWidget {
                   shrinkWrap: true,
                   itemCount: activeNotifications.length,
                   itemBuilder: (context, index) {
-                    var data = activeNotifications[index].data() as Map<String, dynamic>;
+                    var doc = activeNotifications[index];
+                    var data = doc.data() as Map<String, dynamic>;
                     var timestamp = data['timestamp'] as Timestamp?;
                     
+                    bool isCancellation = data['type'] == 'cancellation_urgent' || data['type'] == 'ngo_cancellation';
+                    bool isClaim = data['type'] == 'claim';
+
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: data['isRead'] == true 
                             ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05)
-                            : Colors.green.withValues(alpha: 0.1),
+                            : (isCancellation ? Colors.red.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(15),
                         border: Border.all(
                           color: data['isRead'] == true
                               ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)
-                              : Colors.green.withValues(alpha: 0.2),
+                              : (isCancellation ? Colors.red.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2)),
                         ),
                       ),
                       child: Column(
@@ -119,12 +123,12 @@ class NotificationDialog extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                data['type'] == 'claim' 
+                                isClaim 
                                     ? Icons.check_circle_outline 
-                                    : Icons.food_bank,
-                                color: data['type'] == 'claim'
+                                    : (isCancellation ? Icons.cancel_outlined : Icons.food_bank),
+                                color: isClaim
                                     ? Colors.blue.shade700
-                                    : Colors.green.shade700,
+                                    : (isCancellation ? Colors.red.shade700 : Colors.green.shade700),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -134,6 +138,16 @@ class NotificationDialog extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                   ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  doc.reference.delete();
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],

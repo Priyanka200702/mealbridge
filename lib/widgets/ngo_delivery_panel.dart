@@ -255,210 +255,280 @@ class _NgoDeliveryPanelState extends State<NgoDeliveryPanel> {
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Delivery Verification",
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        FutureBuilder<DocumentSnapshot?>(
-                          future: (data['orgId'] != null && data['orgId'].toString().isNotEmpty)
-                              ? FirebaseFirestore.instance.collection('users').doc(data['orgId']).get()
-                              : Future.value(null),
-                          builder: (context, orgSnapshot) {
-                            if (!orgSnapshot.hasData || !orgSnapshot.data!.exists) {
-                              return const SizedBox.shrink();
-                            }
-                            var orgData = orgSnapshot.data!.data() as Map<String, dynamic>;
-                            String orgName = orgData['name'] ?? 'Organisation';
-                            int ratingCount = orgData['ratingCount'] ?? 0;
-                            double totalRating = (orgData['totalRating'] ?? 0).toDouble();
-                            double rating = ratingCount > 0 ? totalRating / ratingCount : 0.0;
-
-                            return Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    orgName,
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Row(
-                                  children: List.generate(5, (index) {
-                                    return Icon(
-                                      index < rating.floor() ? Icons.star : Icons.star_border,
-                                      color: Colors.amber,
-                                      size: 14,
-                                    );
-                                  }),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _isCheckingLocation ? null : () => _verifyLocation(orgLat, orgLng),
-                    icon: _isCheckingLocation 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Icon(Icons.refresh, color: Colors.white),
-                    tooltip: "Refresh Location",
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              // Food Details
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.restaurant, color: Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "$foodName (Qty: $quantity)",
-                        style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Step 1
-              Row(
-                children: [
-                  Icon(
-                    _isLocationVerified ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Step 1: Location Verification",
-                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                        Text(
-                          _locationStatus,
-                          style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              // Step 2
-              Row(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    _isSuccess ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Step 2: Enter 6-digit OTP",
-                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Container(
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextField(
-                                  controller: _otpController,
-                                  enabled: _isLocationVerified && _attempts < 3,
-                                  keyboardType: TextInputType.number,
-                                  maxLength: 6,
-                                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 4),
-                                  decoration: const InputDecoration(
-                                    counterText: "",
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  ),
-                                ),
+                            Text(
+                              "Delivery Verification",
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: (!_isLocationVerified || _attempts >= 3) 
-                                  ? null 
-                                  : () => _verifyOTP(correctOtp, foodId),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: const Color(0xFF16A34A),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                                minimumSize: const Size(0, 40),
-                                elevation: 0,
-                              ),
-                              child: Text("Verify", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                            FutureBuilder<DocumentSnapshot?>(
+                              future: (data['orgId'] != null &&
+                                      data['orgId'].toString().isNotEmpty)
+                                  ? FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(data['orgId'])
+                                      .get()
+                                  : Future.value(null),
+                              builder: (context, orgSnapshot) {
+                                if (!orgSnapshot.hasData ||
+                                    !orgSnapshot.data!.exists) {
+                                  return const SizedBox.shrink();
+                                }
+                                var orgData =
+                                    orgSnapshot.data!.data() as Map<String, dynamic>;
+                                String orgName = orgData['name'] ?? 'Organisation';
+                                int ratingCount = orgData['ratingCount'] ?? 0;
+                                double totalRating =
+                                    (orgData['totalRating'] ?? 0).toDouble();
+                                double rating = ratingCount > 0
+                                    ? totalRating / ratingCount
+                                    : 0.0;
+
+                                return Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        orgName,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Row(
+                                      children: List.generate(5, (index) {
+                                        return Icon(
+                                          index < rating.floor()
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: Colors.amber,
+                                          size: 14,
+                                        );
+                                      }),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
                         ),
+                      ),
+                      IconButton(
+                        onPressed: _isCheckingLocation
+                            ? null
+                            : () => _verifyLocation(orgLat, orgLng),
+                        icon: _isCheckingLocation
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.refresh, color: Colors.white),
+                        tooltip: "Refresh Location",
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Food Details
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.restaurant, color: Colors.white, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "$foodName (Qty: $quantity)",
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Step 1
+                  Row(
+                    children: [
+                      Icon(
+                        _isLocationVerified
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Step 1: Location Verification",
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              _locationStatus,
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Step 2
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _isSuccess ? Icons.check_circle : Icons.radio_button_unchecked,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Step 2: Enter 6-digit OTP",
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: TextField(
+                                      controller: _otpController,
+                                      enabled: _isLocationVerified && _attempts < 3,
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 6,
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 4,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        counterText: "",
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: (!_isLocationVerified || _attempts >= 3)
+                                      ? null
+                                      : () => _verifyOTP(correctOtp, foodId),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF16A34A),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 0,
+                                    ),
+                                    minimumSize: const Size(0, 40),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                    "Verify",
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               // Cancellation Button
               Positioned(
-                right: 0,
-                bottom: 0,
+                left: -10,
+                bottom: -10,
                 child: GestureDetector(
-                  onTap: () => _cancelDelivery(context, foodId, data['orgId'] as String? ?? '', foodName),
+                  onTap: () => _cancelDelivery(
+                    context,
+                    foodId,
+                    data['orgId'] as String? ?? '',
+                    foodName,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade700,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                     child: const Icon(Icons.close, color: Colors.white, size: 20),
                   ),

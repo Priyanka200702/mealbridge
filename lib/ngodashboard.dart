@@ -124,6 +124,10 @@ class _NGODashboardState extends State<NGODashboard> {
       await FirebaseFirestore.instance.collection('donations_history').doc(id).set({
         'ngoId': user?.uid,
         'ngoName': ngoName,
+        'orgId': ?orgId,
+        if (foodData['orgName'] != null) 'orgName': foodData['orgName'],
+        if (foodData['food'] != null) 'food': foodData['food'],
+        if (foodData['quantity'] != null) 'quantity': foodData['quantity'],
       }, SetOptions(merge: true));
 
       // Increment totalReceived for the NGO
@@ -334,23 +338,6 @@ class _NGODashboardState extends State<NGODashboard> {
                             fontWeight: FontWeight.bold, 
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF34D399), Color(0xFF10B981)]),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.route, color: Colors.white, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              "Optimize Route",
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                            ),
-                          ],
                         ),
                       ),
                     ],

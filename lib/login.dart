@@ -137,6 +137,7 @@ class LoginScreenState extends State<LoginScreen> {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Password reset link sent to your email 📩"),
@@ -144,6 +145,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message ?? "Error sending reset email"),
