@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"extrafood-f6deb","appId":"1:927525905040:android:30fe22be391d382970ee15","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"extrafood-f6deb","configurations":{"android":"1:927525905040:android:30fe22be391d382970ee15","web":"1:927525905040:web:89a9c223cfe31a9370ee15","windows":"1:927525905040:web:4792ddb0eaf7e0a270ee15"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "extrafood-f6deb",
+          "appId": "1:927525905040:android:30fe22be391d382970ee15",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "extrafood-f6deb",
+          "configurations": {
+            "android": "1:927525905040:android:30fe22be391d382970ee15",
+            "web": "1:927525905040:web:89a9c223cfe31a9370ee15",
+            "windows": "1:927525905040:web:4792ddb0eaf7e0a270ee15"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
